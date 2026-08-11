@@ -270,7 +270,7 @@
     </div>
 
     <div class="hint">
-      💡 提示：時段預設為 <b>「公休/未開放」</b>，點擊即可開放預約；已開放的時段再點一次可收回；已被顧客預約的時段為 <b>「已客滿」</b>。
+      💡 提示：時段預設為 <b>「已無可預約時間/未開放」</b>，點擊即可開放預約；已開放的時段再點一次可收回；已被顧客預約的時段為 <b>「已客滿」</b>。
     </div>
 
     <div class="slot-grid" id="adminSlotsContainer">
@@ -379,10 +379,10 @@
         let statusClass, statusLabel;
         if (openTimes.length === 0) {
           statusClass = 'cal-off';
-          statusLabel = '公休';
+          statusLabel = '已無可預約時間';
         } else if (remainingTimes.length === 0) {
           statusClass = 'cal-full';
-          statusLabel = '已滿';
+          statusLabel = '已無可預約時間';
         } else {
           statusClass = 'cal-open';
           statusLabel = remainingTimes.join('、');
