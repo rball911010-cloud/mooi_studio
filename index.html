@@ -281,6 +281,62 @@
     .btn-submit:active { transform: translateY(0) scale(0.99); }
 
     .empty-note { color: var(--ink-soft); font-size: 13.5px; text-align: center; padding: 10px 0; }
+
+    .history-link {
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(90, 64, 56, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-inner {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 420px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px -20px rgba(90,64,56,0.5);
+      position: relative;
+      animation: modalPop .22s ease;
+    }
+    @keyframes modalPop {
+      from { transform: scale(.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--bg-alt);
+      color: var(--ink-soft);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .history-item {
+      padding: 12px 6px;
+      border-bottom: 1.5px dashed var(--line);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-item .h-date { font-weight: 700; font-size: 14px; color: var(--ink); }
+    .history-item .h-detail { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
   </style>
 </head>
 <body>
@@ -364,14 +420,25 @@
     <button class="btn-submit" onclick="submitBooking()">確認並送出預約 🌸</button>
   </div>
 
-  <!-- 5. 預約成功後的快速聯繫（預設隱藏，送出成功才顯示） -->
-  <div class="card" id="confirmCard" style="display:none;">
-    <h3 class="eyebrow">🎉 預約成功</h3>
-    <p id="confirmSummary" style="white-space: pre-line; font-size: 14px; line-height: 1.9; background: var(--bg-alt); padding: 14px 16px; border-radius: 14px; margin: 0 0 16px;"></p>
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <button class="btn-submit" onclick="sendToLine()">📩 傳送預約資訊到 LINE</button>
-      <button class="btn-submit" style="background: linear-gradient(135deg, var(--mint) 0%, #4FAE90 100%); box-shadow: 0 10px 22px -8px rgba(111,205,176,0.55);" onclick="copySummary()">📋 複製預約摘要</button>
-      <span class="quick-fill" style="align-self: center;" onclick="location.reload()">重新填寫下一筆預約</span>
+  <!-- 5. 預約成功彈窗（預設隱藏，送出成功才顯示，浮在畫面正中間不受捲動位置影響） -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-inner">
+      <h3 class="eyebrow">🎉 預約成功</h3>
+      <p id="confirmSummary" style="white-space: pre-line; font-size: 14px; line-height: 1.9; background: var(--bg-alt); padding: 14px 16px; border-radius: 14px; margin: 0 0 16px;"></p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn-submit" onclick="sendToLine()">📩 傳送預約資訊到 LINE</button>
+        <button class="btn-submit" style="background: linear-gradient(135deg, var(--mint) 0%, #4FAE90 100%); box-shadow: 0 10px 22px -8px rgba(111,205,176,0.55);" onclick="copySummary()">📋 複製預約摘要</button>
+        <span class="quick-fill" style="align-self: center;" onclick="location.reload()">重新填寫下一筆預約</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 預約紀錄彈窗（依電話號碼查詢，不顯示金額） -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-inner">
+      <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+      <h3 class="eyebrow">📖 我的預約紀錄</h3>
+      <div id="historyList"></div>
     </div>
   </div>
 
@@ -601,7 +668,42 @@
       if (!lineInput.value && last.line_id) lineInput.value = last.line_id;
 
       note.style.display = 'block';
-      note.innerHTML = `🌼 歡迎回來，${last.customer_name}！`;
+      note.innerHTML = `🌼 歡迎回來，${last.customer_name}！ <span class="history-link" onclick="showBookingHistory()">查看我的預約紀錄</span>`;
+    }
+
+    // 查看該電話號碼的所有預約紀錄（不顯示金額，因為價格會調整）
+    async function showBookingHistory() {
+      const phone = document.getElementById('custPhone').value.trim();
+      if (!phone) return;
+
+      const listEl = document.getElementById('historyList');
+      listEl.innerHTML = '<p class="empty-note">載入中...</p>';
+      document.getElementById('historyModal').style.display = 'flex';
+
+      const { data, error } = await supabaseClient
+        .from('bookings')
+        .select('booking_date, booking_time, style_name, add_ons')
+        .eq('customer_phone', phone)
+        .order('booking_date', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        listEl.innerHTML = '<p class="empty-note">尚無預約紀錄</p>';
+        return;
+      }
+
+      listEl.innerHTML = data.map(b => {
+        const addonNames = (b.add_ons || []).map(a => a.name).join('、') || '無';
+        return `
+          <div class="history-item">
+            <div class="h-date">${b.booking_date} ${b.booking_time}</div>
+            <div class="h-detail">款式：${b.style_name}　加購：${addonNames}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('historyModal').style.display = 'none';
     }
 
     // 載入款式與加購資料
@@ -740,8 +842,7 @@
 
         document.getElementById('confirmSummary').textContent = lastBookingSummary;
         document.getElementById('formCard4').style.display = 'none';
-        document.getElementById('confirmCard').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('confirmModal').style.display = 'flex';
 
         // 通知你（管理員）：只要預約成功就推播，不管客人是從哪個管道進來、有沒有登入 LINE
         if (ADMIN_LINE_USER_ID && ADMIN_LINE_USER_ID !== 'YOUR-ADMIN-LINE-USER-ID' && LINE_PUSH_FUNCTION_URL) {
