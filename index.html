@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOOI_STUDIO美睫線上預約</title>
+  <title>MOOI|沐意美睫線上預約</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,14 +17,14 @@
       --bg-alt: #FFE6DC;
       --card: #FFFFFF;
       --line: #FFDCCF;
-      --pink: #FF8FAB;
-      --pink-deep: #F2678C;
-      --peach: #FFB199;
+      --accent: #E0A458;
+      --accent-deep: #C6852E;
+      --peach: #C6852E;
       --mint: #6FCDB0;
       --mint-tint: #E7F8F1;
       --coral: #FF8177;
       --coral-tint: #FFEEEA;
-      --shadow: 0 14px 28px -16px rgba(242, 103, 140, 0.35);
+      --shadow: 0 14px 28px -16px rgba(198, 133, 46, 0.35);
     }
 
     * { box-sizing: border-box; }
@@ -32,8 +33,8 @@
       font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: var(--bg);
       background-image:
-        radial-gradient(circle at 10% 0%, rgba(255,143,171,0.14), transparent 42%),
-        radial-gradient(circle at 95% 100%, rgba(255,177,153,0.16), transparent 45%);
+        radial-gradient(circle at 10% 0%, rgba(224,164,88,0.14), transparent 42%),
+        radial-gradient(circle at 95% 100%, rgba(111,205,176,0.16), transparent 45%);
       color: var(--ink);
       max-width: 600px;
       margin: 0 auto;
@@ -50,7 +51,7 @@
       font-size: 27px;
       letter-spacing: 0.02em;
       margin: 0 0 8px;
-      color: var(--pink-deep);
+      color: var(--accent-deep);
     }
     .tagline { font-size: 13.5px; color: var(--ink-soft); margin: 0; font-weight: 500; }
 
@@ -78,14 +79,14 @@
     .eyebrow .num {
       font-size: 13px;
       color: #fff;
-      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
       border-radius: 999px;
       width: 24px; height: 24px;
       display: inline-flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       font-family: 'Baloo 2', sans-serif;
       font-weight: 700;
-      box-shadow: 0 4px 10px -3px rgba(242,103,140,0.6);
+      box-shadow: 0 4px 10px -3px rgba(198,133,46,0.6);
     }
 
     /* ---------- Form ---------- */
@@ -111,14 +112,14 @@
     }
     input:focus, select:focus {
       outline: none;
-      border-color: var(--pink);
-      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(224,164,88,0.18);
     }
     input::placeholder { color: #D6B7AC; }
 
     .quick-fill {
       font-size: 12px;
-      color: var(--pink-deep);
+      color: var(--accent-deep);
       cursor: pointer;
       font-weight: 700;
       margin-left: auto;
@@ -136,18 +137,18 @@
       display: none;
       margin-top: 10px;
       background: var(--bg-alt);
-      color: var(--pink-deep);
+      color: var(--accent-deep);
       font-size: 13px;
       font-weight: 600;
       padding: 10px 14px;
       border-radius: 14px;
-      border: 1.5px dashed var(--pink);
+      border: 1.5px dashed var(--accent);
     }
 
     /* ---------- Monthly calendar (date picker) ---------- */
     .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .btn-nav {
-      background: var(--bg-alt); color: var(--pink-deep); border: none;
+      background: var(--bg-alt); color: var(--accent-deep); border: none;
       width: 32px; height: 32px; border-radius: 999px; font-size: 16px; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: transform .15s ease;
@@ -173,8 +174,8 @@
     .calendar-day.empty { visibility: hidden; cursor: default; }
     .calendar-day .day-num { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 12.5px; color: var(--ink); }
     .calendar-day .day-status { font-size: 9px; margin-top: auto; font-weight: 700; }
-    .calendar-day.today { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,143,171,0.25); }
-    .calendar-day.selected { background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%); border-color: var(--pink-deep); }
+    .calendar-day.today { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(224,164,88,0.25); }
+    .calendar-day.selected { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); border-color: var(--accent-deep); }
     .calendar-day.selected .day-num, .calendar-day.selected .day-status { color: #fff; }
     .calendar-day.cal-off { background: var(--bg-alt); cursor: default; }
     .calendar-day.cal-off .day-status { color: var(--ink-soft); }
@@ -203,13 +204,13 @@
       color: var(--ink);
       transition: all .16s ease;
     }
-    .slot-btn:hover { border-color: var(--pink); transform: translateY(-2px) scale(1.02); }
+    .slot-btn:hover { border-color: var(--accent); transform: translateY(-2px) scale(1.02); }
     .slot-btn.selected {
-      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
       color: #fff;
-      border-color: var(--pink-deep);
+      border-color: var(--accent-deep);
       font-weight: 700;
-      box-shadow: 0 6px 14px -6px rgba(242,103,140,0.6);
+      box-shadow: 0 6px 14px -6px rgba(198,133,46,0.6);
     }
     .slot-btn.disabled {
       background: var(--bg-alt);
@@ -239,13 +240,13 @@
     }
     .option-item input[type="radio"], .option-item input[type="checkbox"] {
       width: 18px; height: 18px;
-      accent-color: var(--pink-deep);
+      accent-color: var(--accent-deep);
       cursor: pointer;
     }
     .option-item .price {
       font-family: 'Baloo 2', sans-serif;
       font-weight: 700;
-      color: var(--pink-deep);
+      color: var(--accent-deep);
       font-size: 14px;
       white-space: nowrap;
     }
@@ -264,13 +265,13 @@
       font-family: 'Baloo 2', sans-serif;
       font-size: 28px;
       font-weight: 800;
-      color: var(--pink-deep);
+      color: var(--accent-deep);
     }
     .total-value .currency { font-size: 15px; color: var(--peach); margin-right: 3px; }
 
     .btn-submit {
       width: 100%;
-      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
       color: #fff;
       padding: 16px;
       border: none;
@@ -280,7 +281,7 @@
       letter-spacing: 0.03em;
       font-family: 'Baloo 2', sans-serif;
       cursor: pointer;
-      box-shadow: 0 10px 22px -8px rgba(242,103,140,0.6);
+      box-shadow: 0 10px 22px -8px rgba(198,133,46,0.6);
       transition: transform .15s ease, box-shadow .15s ease;
     }
     .btn-submit:hover { transform: translateY(-2px) scale(1.01); }
@@ -292,8 +293,8 @@
 <body>
 
   <div class="brand">
-    <span class="sparkle">✨ 💕 ✨</span>
-    <h2 class="title">美睫線上預約</h2>
+    <span class="sparkle">✨ 🌼 ✨</span>
+    <h2 class="title">MOOI|沐意美睫線上預約</h2>
     <p class="tagline">選定時段，交給我們把細節做好</p>
   </div>
 
@@ -362,17 +363,28 @@
   </div>
 
   <!-- 4. 總計與送出 -->
-  <div class="card">
+  <div class="card" id="formCard4">
     <div class="total-row">
       <span class="total-label">預計金額</span>
       <span class="total-value"><span class="currency">NT$</span><span id="totalPrice">0</span></span>
     </div>
-    <button class="btn-submit" onclick="submitBooking()">確認並送出預約 💗</button>
+    <button class="btn-submit" onclick="submitBooking()">確認並送出預約 🌸</button>
+  </div>
+
+  <!-- 5. 預約成功後的快速聯繫（預設隱藏，送出成功才顯示） -->
+  <div class="card" id="confirmCard" style="display:none;">
+    <h3 class="eyebrow">🎉 預約成功</h3>
+    <p id="confirmSummary" style="white-space: pre-line; font-size: 14px; line-height: 1.9; background: var(--bg-alt); padding: 14px 16px; border-radius: 14px; margin: 0 0 16px;"></p>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <button class="btn-submit" onclick="sendToLine()">📩 傳送預約資訊到 LINE</button>
+      <button class="btn-submit" style="background: linear-gradient(135deg, var(--mint) 0%, #4FAE90 100%); box-shadow: 0 10px 22px -8px rgba(111,205,176,0.55);" onclick="copySummary()">📋 複製預約摘要</button>
+      <span class="quick-fill" style="align-self: center;" onclick="location.reload()">重新填寫下一筆預約</span>
+    </div>
   </div>
 
   <script>
     // 🔗 請替換為你自己的 Supabase URL 與 Anon Key
-    const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co';
+    const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co/rest/v1/';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -386,10 +398,65 @@
     let calYear, calMonth;
 
     // 預設常見時段（月曆總覽與時段清單共用）
-    const DEFAULT_SLOTS = ['10:00', '13:00', '15:00', '17:00', '19:00'];
+    const DEFAULT_SLOTS = ['10:00', '13:00', '15:30', '18:00', '20:00'];
+
+    // ---------- LINE 好友身份 (LIFF) ----------
+    // 👉 到 LINE Developers Console 建立 LIFF App 後，把 LIFF ID 貼在這裡即可啟用；
+    //    沒有填的話會自動略過，不影響其他功能。
+    const LIFF_ID = 'YOUR-LIFF-ID';
+    let lineProfile = null; // { userId, displayName, pictureUrl }
+
+    // 👉 你的 LINE 官方帳號 ID（在 LINE 官方帳號管理後台「設定」可查到，格式如 @abc1234）
+    //    填了之後，客人送出預約後可以一鍵把資料傳到你的 LINE，完全免費、不需要額外申請。
+    const LINE_OA_ID = 'YOUR-LINE-OA-ID';
+    let lastBookingSummary = '';
+
+    // 👉 部署好 send-line-confirmation 這個 Supabase Edge Function 後，把網址貼在這裡，
+    //    就能在客人是從 LINE 進來（有抓到 LIFF userId）時自動推播預約成功訊息。
+    //    沒填的話會自動略過，改用上面「客人手動傳送」的按鈕，不影響其他功能。
+    const LINE_PUSH_FUNCTION_URL = '';
+
+    async function initLiff() {
+      if (!LIFF_ID || LIFF_ID.includes('YOUR-LIFF-ID')) return; // 尚未設定 LIFF，略過
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (liff.isLoggedIn()) {
+          lineProfile = await liff.getProfile();
+          // 姓名欄位若還是空的，用 LINE 暱稱幫忙帶入（顧客仍可自行修改）
+          const nameInput = document.getElementById('custName');
+          if (nameInput && !nameInput.value && lineProfile.displayName) {
+            nameInput.value = lineProfile.displayName;
+          }
+        } else if (liff.isInClient()) {
+          // 在 LINE App 內開啟但尚未登入，導向登入
+          liff.login();
+        }
+      } catch (e) {
+        console.warn('LIFF 初始化失敗：', e);
+      }
+    }
+
+    // ---------- 流量來源判斷 (IG / LINE / 其他) ----------
+    // 在 IG 簡介連結後面加 ?source=instagram，LINE 訊息連結加 ?source=line，
+    // 就能知道這筆預約是從哪個管道進來的（IG 沒有辦法拿到訪客身份，只能標記來源）。
+    function detectTrafficSource() {
+      const params = new URLSearchParams(window.location.search);
+      const fromParam = params.get('source');
+      if (fromParam) return fromParam;
+
+      const ref = document.referrer || '';
+      if (ref.includes('instagram.com')) return 'instagram';
+      if (ref.includes('line.me') || ref.includes('liff.line.me')) return 'line';
+      if (ref.includes('facebook.com')) return 'facebook';
+      if (ref) return 'referral';
+      return 'direct';
+    }
+    let trafficSource = 'direct';
 
     // 初始化頁面
     window.onload = async () => {
+      trafficSource = detectTrafficSource();
+      await initLiff();
       checkSavedCustomer();
       await fetchStylesAndAddons();
 
@@ -536,7 +603,7 @@
       if (!lineInput.value && last.line_id) lineInput.value = last.line_id;
 
       note.style.display = 'block';
-      note.innerHTML = `💖 歡迎回來，${last.customer_name}！這是你第 ${data.length + 1} 次預約，我們記得你～`;
+      note.innerHTML = `🌼 歡迎回來，${last.customer_name}！這是你第 ${data.length + 1} 次預約，我們記得你～`;
     }
 
     // 載入款式與加購資料
@@ -590,17 +657,21 @@
 
       const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
 
-      slotsContainer.innerHTML = defaultSlots.map(time => {
+      // 只顯示真的有開放且尚未被預約的時段，不列出公休/已額滿的常見時段
+      const openSlots = defaultSlots.filter(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
-        // 預設為未開放，只有店家明確標註 is_available === true 才顯示可預約
         const isOff = !(schedule && schedule.is_available === true);
         const isBooked = bookedSlots.includes(time);
+        return !isOff && !isBooked;
+      });
 
-        if (isOff || isBooked) {
-          return `<div class="slot-btn disabled">${time} (${isBooked ? '已額滿' : '休'})</div>`;
-        } else {
-          return `<div class="slot-btn" onclick="selectSlot(this, '${time}')">${time}</div>`;
-        }
+      if (openSlots.length === 0) {
+        slotsContainer.innerHTML = '<p class="empty-note" style="grid-column: 1/-1;">這天目前沒有可預約的時段</p>';
+        return;
+      }
+
+      slotsContainer.innerHTML = openSlots.map(time => {
+        return `<div class="slot-btn" onclick="selectSlot(this, '${time}')">${time}</div>`;
       }).join('');
     }
 
@@ -657,14 +728,60 @@
         style_id: selectedStyle.id,
         style_name: selectedStyle.name,
         add_ons: selectedAddons,
-        total_price: Number(total)
+        total_price: Number(total),
+        source: trafficSource,
+        line_user_id: lineProfile ? lineProfile.userId : null,
+        line_display_name: lineProfile ? lineProfile.displayName : null
       }]);
 
       if (error) {
         alert('預約失敗：' + error.message);
       } else {
-        alert('🎉 預約成功！我們將盡快聯繫您確認。');
-        location.reload();
+        // 組出一段可以直接傳送/複製的預約摘要
+        const addonText = selectedAddons.length ? selectedAddons.map(a => a.name).join('、') : '無';
+        lastBookingSummary =
+          `【美睫預約通知】\n` +
+          `姓名：${name}\n` +
+          `電話：${phone}\n` +
+          `日期：${date} ${selectedTimeSlot}\n` +
+          `款式：${selectedStyle.name}\n` +
+          `加購：${addonText}\n` +
+          `金額：NT$ ${total}`;
+
+        document.getElementById('confirmSummary').textContent = lastBookingSummary;
+        document.getElementById('formCard4').style.display = 'none';
+        document.getElementById('confirmCard').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // 如果客人是從 LINE 進來、且已透過 LIFF 抓到身份，自動推播預約成功訊息
+        // （沒抓到身份或沒設定 Edge Function 網址時，會自動略過，改用手動傳送按鈕）
+        if (lineProfile && lineProfile.userId && LINE_PUSH_FUNCTION_URL) {
+          fetch(LINE_PUSH_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: lineProfile.userId, message: lastBookingSummary })
+          }).catch(e => console.warn('LINE 自動推播失敗，客人仍可使用手動傳送按鈕：', e));
+        }
+      }
+    }
+
+    // 一鍵把預約摘要傳到 LINE（打開 LINE 對話並帶入文字，客人按送出即可，完全免費）
+    function sendToLine() {
+      if (!LINE_OA_ID || LINE_OA_ID.includes('YOUR-LINE-OA-ID')) {
+        alert('店家尚未設定 LINE 官方帳號，請改用下方「複製預約摘要」傳送給我們。');
+        return;
+      }
+      const url = `https://line.me/R/oaMessage/${encodeURIComponent(LINE_OA_ID)}/?${encodeURIComponent(lastBookingSummary)}`;
+      window.open(url, '_blank');
+    }
+
+    // 複製預約摘要，讓客人可以貼到 LINE、IG 私訊、簡訊等任何管道（通用備案）
+    async function copySummary() {
+      try {
+        await navigator.clipboard.writeText(lastBookingSummary);
+        alert('已複製預約摘要！可以貼到 LINE、IG 私訊或簡訊傳送給我們 😊');
+      } catch {
+        alert('複製失敗，請手動選取以下文字：\n\n' + lastBookingSummary);
       }
     }
   </script>
