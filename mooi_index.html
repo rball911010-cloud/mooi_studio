@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美睫線上預約</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #c5a059;
+      --bg: #fdfbf7;
+      --text: #4a4a4a;
+      --border: #e2d7c5;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2, h3 { color: #2c2c2c; text-align: center; }
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; }
+    input[type="text"], input[type="tel"], input[type="date"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .slot-btn {
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .slot-btn.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .slot-btn.disabled {
+      background: #f0f0f0;
+      color: #ccc;
+      cursor: not-allowed;
+    }
+    .option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .quick-fill {
+      font-size: 12px;
+      color: var(--primary);
+      cursor: pointer;
+      float: right;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>✨ 美睫線上預約表 ✨</h2>
+
+  <!-- 1. 個人資訊與快速載入 -->
+  <div class="card">
+    <h3>1. 個人資訊 <span class="quick-fill" id="btnQuickFill" style="display:none;" onclick="loadSavedCustomer()">⚡ 自動帶入上次資料</span></h3>
+    <div class="form-group">
+      <label>姓名 *</label>
+      <input type="text" id="custName" placeholder="請輸入姓名" required>
+    </div>
+    <div class="form-group">
+      <label>電話 *</label>
+      <input type="tel" id="custPhone" placeholder="請輸入手機號碼" required>
+    </div>
+    <div class="form-group">
+      <label>LINE ID</label>
+      <input type="text" id="custLine" placeholder="方便聯繫溝通 (選填)">
+    </div>
+  </div>
+
+  <!-- 2. 月曆與時段選擇 -->
+  <div class="card">
+    <h3>2. 選擇預約日期與時段</h3>
+    <div class="form-group">
+      <label>選擇日期 *</label>
+      <input type="date" id="bookingDate" onchange="loadAvailableSlots()">
+    </div>
+    <label>可預約時段 *</label>
+    <div class="slot-grid" id="slotsContainer">
+      <p style="color:#999; grid-column: 1/-1; text-align:center;">請先選擇日期</p>
+    </div>
+  </div>
+
+  <!-- 3. 款式與加購選擇 -->
+  <div class="card">
+    <h3>3. 選擇美睫款式與加購項目</h3>
+    <div class="form-group">
+      <label>美睫款式 *</label>
+      <div id="styleOptions">載入中...</div>
+    </div>
+    <div class="form-group" style="margin-top:20px;">
+      <label>加購項目 (複選)</label>
+      <div id="addonOptions">載入中...</div>
+    </div>
+  </div>
+
+  <!-- 4. 總計與送出 -->
+  <div class="card">
+    <div style="font-size:18px; font-weight:bold; margin-bottom:15px; text-align:right;">
+      預計金額：NT$ <span id="totalPrice">0</span>
+    </div>
+    <button class="btn-submit" onclick="submitBooking()">確認並送出預約</button>
+  </div>
+
+  <script>
+    // 🔗 請替換為你自己的 Supabase URL 與 Anon Key
+    const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co/rest/v1/';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let selectedTimeSlot = '';
+    let selectedStyle = null;
+    let selectedAddons = [];
+    let stylesData = [];
+    let addonsData = [];
+
+    // 初始化頁面
+    window.onload = async () => {
+      checkSavedCustomer();
+      await fetchStylesAndAddons();
+      // 預設日期為明天
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('bookingDate').value = tomorrow.toISOString().split('T')[0];
+      loadAvailableSlots();
+    };
+
+    // 檢查 LocalStorage 記憶顧客資料
+    function checkSavedCustomer() {
+      const saved = localStorage.getItem('eyelash_customer');
+      if (saved) {
+        document.getElementById('btnQuickFill').style.display = 'inline';
+      }
+    }
+
+    function loadSavedCustomer() {
+      const saved = JSON.parse(localStorage.getItem('eyelash_customer'));
+      if (saved) {
+        document.getElementById('custName').value = saved.name || '';
+        document.getElementById('custPhone').value = saved.phone || '';
+        document.getElementById('custLine').value = saved.line || '';
+      }
+    }
+
+    // 載入款式與加購資料
+    async function fetchStylesAndAddons() {
+      const { data: styles } = await supabaseClient.from('eyelash_styles').select('*');
+      const { data: addons } = await supabaseClient.from('add_ons').select('*');
+
+      stylesData = styles || [];
+      addonsData = addons || [];
+
+      // 渲染款式單選按鈕
+      const styleContainer = document.getElementById('styleOptions');
+      if (stylesData.length === 0) styleContainer.innerHTML = '<p>尚無可選款式</p>';
+      else {
+        styleContainer.innerHTML = stylesData.map(s => `
+          <div class="option-item">
+            <label><input type="radio" name="styleSelect" value="${s.id}" onchange="updateTotal()"> ${s.name}</label>
+            <span>NT$ ${s.price}</span>
+          </div>
+        `).join('');
+      }
+
+      // 渲染加購複選按鈕
+      const addonContainer = document.getElementById('addonOptions');
+      if (addonsData.length === 0) addonContainer.innerHTML = '<p>無加購項目</p>';
+      else {
+        addonContainer.innerHTML = addonsData.map(a => `
+          <div class="option-item">
+            <label><input type="checkbox" class="addon-checkbox" value="${a.id}" onchange="updateTotal()"> ${a.name}</label>
+            <span>+ NT$ ${a.price}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 載入指定日期的可預約時段
+    async function loadAvailableSlots() {
+      const date = document.getElementById('bookingDate').value;
+      if (!date) return;
+
+      selectedTimeSlot = '';
+      const slotsContainer = document.getElementById('slotsContainer');
+      slotsContainer.innerHTML = '載入中...';
+
+      // 預設常見時段
+      const defaultSlots = ['10:00', '13:00', '15:30', '18:00', '20:00'];
+
+      // 查詢資料庫該日期排程與已預約資料
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('booking_time').eq('booking_date', date);
+
+      const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
+
+      slotsContainer.innerHTML = defaultSlots.map(time => {
+        const schedule = dbSchedules?.find(s => s.time_slot === time);
+        const isOff = schedule && schedule.is_available === false;
+        const isBooked = bookedSlots.includes(time);
+
+        if (isOff || isBooked) {
+          return `<div class="slot-btn disabled">${time} (${isBooked ? '已額滿' : '休'})</div>`;
+        } else {
+          return `<div class="slot-btn" onclick="selectSlot(this, '${time}')">${time}</div>`;
+        }
+      }).join('');
+    }
+
+    function selectSlot(btn, time) {
+      document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedTimeSlot = time;
+    }
+
+    // 計算總金額
+    function updateTotal() {
+      let total = 0;
+      const selectedStyleId = document.querySelector('input[name="styleSelect"]:checked')?.value;
+      if (selectedStyleId) {
+        selectedStyle = stylesData.find(s => s.id === selectedStyleId);
+        if (selectedStyle) total += Number(selectedStyle.price);
+      }
+
+      selectedAddons = [];
+      document.querySelectorAll('.addon-checkbox:checked').forEach(cb => {
+        const addon = addonsData.find(a => a.id === cb.value);
+        if (addon) {
+          selectedAddons.push(addon);
+          total += Number(addon.price);
+        }
+      });
+
+      document.getElementById('totalPrice').innerText = total;
+    }
+
+    // 送出預約單
+    async function submitBooking() {
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const line = document.getElementById('custLine').value.trim();
+      const date = document.getElementById('bookingDate').value;
+
+      if (!name || !phone) { alert('請填寫姓名與電話！'); return; }
+      if (!date || !selectedTimeSlot) { alert('請選擇日期與預約時段！'); return; }
+      if (!selectedStyle) { alert('請選擇美睫款式！'); return; }
+
+      const total = document.getElementById('totalPrice').innerText;
+
+      // 儲存顧客資料至本地儲存區 (記憶功能)
+      localStorage.setItem('eyelash_customer', JSON.stringify({ name, phone, line }));
+
+      // 寫入 Supabase
+      const { error } = await supabaseClient.from('bookings').insert([{
+        customer_name: name,
+        customer_phone: phone,
+        line_id: line,
+        booking_date: date,
+        booking_time: selectedTimeSlot,
+        style_id: selectedStyle.id,
+        style_name: selectedStyle.name,
+        add_ons: selectedAddons,
+        total_price: Number(total)
+      }]);
+
+      if (error) {
+        alert('預約失敗：' + error.message);
+      } else {
+        alert('🎉 預約成功！我們將盡快聯繫您確認。');
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

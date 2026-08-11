@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美睫後台管理系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f4f6f9; color: #333; }
+    h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+    .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #f8f9fa; }
+    input[type="text"], input[type="number"] { width: 90%; padding: 6px; }
+    .btn { padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-danger { background: #dc3545; }
+    .btn-save { background: #007bff; }
+  </style>
+</head>
+<body>
+
+  <h2>⚙️ 美睫預約後台管理系統</h2>
+
+  <!-- 1. 款式項目維護 (Excel風格編輯) -->
+  <div class="section">
+    <h3>1. 款式項目管理 (可直接在表格內修改編輯)</h3>
+    <table id="stylesTable">
+      <thead>
+        <tr><th>款式名稱</th><th>價格 (NT$)</th><th>操作</th></tr>
+      </thead>
+      <tbody><!-- 動態載入 --></tbody>
+    </table>
+    <br>
+    <button class="btn" onclick="addStyleRow()">+ 新增款式列</button>
+  </div>
+
+  <!-- 2. 加購項目維護 -->
+  <div class="section">
+    <h3>2. 加購項目管理</h3>
+    <table id="addonsTable">
+      <thead>
+        <tr><th>加購名稱</th><th>價格 (NT$)</th><th>操作</th></tr>
+      </thead>
+      <tbody><!-- 動態載入 --></tbody>
+    </table>
+    <br>
+    <button class="btn" onclick="addAddonRow()">+ 新增加購列</button>
+  </div>
+
+  <!-- 3. 預約紀錄清單 -->
+  <div class="section">
+    <h3>3. 所有預約紀錄</h3>
+    <table id="bookingsTable">
+      <thead>
+        <tr><th>預約日期</th><th>時段</th><th>顧客姓名</th><th>電話</th><th>款式</th><th>總金額</th><th>狀態</th></tr>
+      </thead>
+      <tbody><!-- 動態載入 --></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co/rest/v1/';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.onload = () => {
+      loadStyles();
+      loadAddons();
+      loadBookings();
+    };
+
+    // --- 款式管理 ---
+    async function loadStyles() {
+      const { data } = await supabaseClient.from('eyelash_styles').select('*').order('created_at');
+      const tbody = document.querySelector('#stylesTable tbody');
+      tbody.innerHTML = (data || []).map(s => `
+        <tr>
+          <td><input type="text" value="${s.name}" id="style-name-${s.id}"></td>
+          <td><input type="number" value="${s.price}" id="style-price-${s.id}"></td>
+          <td>
+            <button class="btn btn-save" onclick="saveStyle('${s.id}')">儲存</button>
+            <button class="btn btn-danger" onclick="deleteStyle('${s.id}')">刪除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveStyle(id) {
+      const name = document.getElementById(`style-name-${id}`).value;
+      const price = document.getElementById(`style-price-${id}`).value;
+      await supabaseClient.from('eyelash_styles').update({ name, price }).eq('id', id);
+      alert('款式已更新！');
+    }
+
+    async function deleteStyle(id) {
+      if(confirm('確定要刪除嗎？')) {
+        await supabaseClient.from('eyelash_styles').delete().eq('id', id);
+        loadStyles();
+      }
+    }
+
+    async function addStyleRow() {
+      const name = prompt('請輸入新款式名稱：');
+      const price = prompt('請輸入價格：');
+      if (name && price) {
+        await supabaseClient.from('eyelash_styles').insert([{ name, price: Number(price) }]);
+        loadStyles();
+      }
+    }
+
+    // --- 加購管理 ---
+    async function loadAddons() {
+      const { data } = await supabaseClient.from('add_ons').select('*').order('created_at');
+      const tbody = document.querySelector('#addonsTable tbody');
+      tbody.innerHTML = (data || []).map(a => `
+        <tr>
+          <td><input type="text" value="${a.name}" id="addon-name-${a.id}"></td>
+          <td><input type="number" value="${a.price}" id="addon-price-${a.id}"></td>
+          <td>
+            <button class="btn btn-save" onclick="saveAddon('${a.id}')">儲存</button>
+            <button class="btn btn-danger" onclick="deleteAddon('${a.id}')">刪除</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveAddon(id) {
+      const name = document.getElementById(`addon-name-${id}`).value;
+      const price = document.getElementById(`addon-price-${id}`).value;
+      await supabaseClient.from('add_ons').update({ name, price }).eq('id', id);
+      alert('加購項目已更新！');
+    }
+
+    async function deleteAddon(id) {
+      if(confirm('確定要刪除嗎？')) {
+        await supabaseClient.from('add_ons').delete().eq('id', id);
+        loadAddons();
+      }
+    }
+
+    async function addAddonRow() {
+      const name = prompt('請輸入新加購名稱：');
+      const price = prompt('請輸入價格：');
+      if (name && price) {
+        await supabaseClient.from('add_ons').insert([{ name, price: Number(price) }]);
+        loadAddons();
+      }
+    }
+
+    // --- 預約紀錄檢視 ---
+    async function loadBookings() {
+      const { data } = await supabaseClient.from('bookings').select('*').order('booking_date', { ascending: false });
+      const tbody = document.querySelector('#bookingsTable tbody');
+      tbody.innerHTML = (data || []).map(b => `
+        <tr>
+          <td>${b.booking_date}</td>
+          <td>${b.booking_time}</td>
+          <td>${b.customer_name}</td>
+          <td>${b.customer_phone}</td>
+          <td>${b.style_name}</td>
+          <td>NT$ ${b.total_price}</td>
+          <td>${b.status}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
