@@ -519,10 +519,10 @@
         let statusClass, statusLabel;
         if (openTimes.length === 0) {
           statusClass = 'cal-off';
-          statusLabel = '公休';
+          statusLabel = '已無可預約時間';
         } else if (remainingTimes.length === 0) {
           statusClass = 'cal-full';
-          statusLabel = '已滿';
+          statusLabel = '已無可預約時間';
         } else {
           statusClass = 'cal-open';
           statusLabel = '可預約';
@@ -603,7 +603,7 @@
       if (!lineInput.value && last.line_id) lineInput.value = last.line_id;
 
       note.style.display = 'block';
-      note.innerHTML = `🌼 歡迎回來，${last.customer_name}！這是你第 ${data.length + 1} 次預約，我們記得你～`;
+      note.innerHTML = `🌼 歡迎回來，${last.customer_name}！`;
     }
 
     // 載入款式與加購資料
