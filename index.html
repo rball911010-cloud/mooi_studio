@@ -403,12 +403,12 @@
     // ---------- LINE 好友身份 (LIFF) ----------
     // 👉 到 LINE Developers Console 建立 LIFF App 後，把 LIFF ID 貼在這裡即可啟用；
     //    沒有填的話會自動略過，不影響其他功能。
-    const LIFF_ID = 'YOUR-LIFF-ID';
+    const LIFF_ID = 'Y2011072988-Nzr1UAfi';
     let lineProfile = null; // { userId, displayName, pictureUrl }
 
     // 👉 你的 LINE 官方帳號 ID（在 LINE 官方帳號管理後台「設定」可查到，格式如 @abc1234）
     //    填了之後，客人送出預約後可以一鍵把資料傳到你的 LINE，完全免費、不需要額外申請。
-    const LINE_OA_ID = 'YOUR-LINE-OA-ID';
+    const LINE_OA_ID = '@525kfdtx';
     let lastBookingSummary = '';
 
     // 👉 部署好 send-line-confirmation 這個 Supabase Edge Function 後，把網址貼在這裡，
@@ -417,7 +417,7 @@
     const LINE_PUSH_FUNCTION_URL = '';
 
     async function initLiff() {
-      if (!LIFF_ID || LIFF_ID.includes('YOUR-LIFF-ID')) return; // 尚未設定 LIFF，略過
+      if (!LIFF_ID || LIFF_ID.includes('Y2011072988-Nzr1UAfi')) return; // 尚未設定 LIFF，略過
       try {
         await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
@@ -767,7 +767,7 @@
 
     // 一鍵把預約摘要傳到 LINE（打開 LINE 對話並帶入文字，客人按送出即可，完全免費）
     function sendToLine() {
-      if (!LINE_OA_ID || LINE_OA_ID.includes('YOUR-LINE-OA-ID')) {
+      if (!LINE_OA_ID || LINE_OA_ID.includes('@525kfdtx')) {
         alert('店家尚未設定 LINE 官方帳號，請改用下方「複製預約摘要」傳送給我們。');
         return;
       }
