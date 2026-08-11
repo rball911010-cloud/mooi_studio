@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>美睫線上預約</title>
+  <title>MOOI_STUDIO美睫線上預約</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,6 +144,46 @@
       border: 1.5px dashed var(--pink);
     }
 
+    /* ---------- Monthly calendar (date picker) ---------- */
+    .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .btn-nav {
+      background: var(--bg-alt); color: var(--pink-deep); border: none;
+      width: 32px; height: 32px; border-radius: 999px; font-size: 16px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform .15s ease;
+    }
+    .btn-nav:hover { transform: scale(1.12); }
+    .month-label { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 16px; color: var(--ink); }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .calendar-weekday { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--ink-soft); padding-bottom: 4px; }
+    .calendar-day {
+      min-height: 54px;
+      border-radius: 11px;
+      border: 2px solid var(--line);
+      padding: 5px 4px;
+      cursor: pointer;
+      background: #FFFCFB;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all .15s ease;
+    }
+    .calendar-day:hover { transform: translateY(-2px) scale(1.03); }
+    .calendar-day.empty { visibility: hidden; cursor: default; }
+    .calendar-day .day-num { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 12.5px; color: var(--ink); }
+    .calendar-day .day-status { font-size: 9px; margin-top: auto; font-weight: 700; }
+    .calendar-day.today { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,143,171,0.25); }
+    .calendar-day.selected { background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%); border-color: var(--pink-deep); }
+    .calendar-day.selected .day-num, .calendar-day.selected .day-status { color: #fff; }
+    .calendar-day.cal-off { background: var(--bg-alt); cursor: default; }
+    .calendar-day.cal-off .day-status { color: var(--ink-soft); }
+    .calendar-day.cal-full { background: var(--coral-tint); border-color: var(--coral); cursor: default; }
+    .calendar-day.cal-full .day-status { color: #B04A3F; }
+    .calendar-day.cal-open { background: var(--mint-tint); border-color: var(--mint); }
+    .calendar-day.cal-open .day-status { color: #3E7A66; }
+    .calendar-day.cal-past { opacity: 0.4; cursor: default; }
+
     /* ---------- Slot grid ---------- */
     .slot-grid {
       display: grid;
@@ -283,11 +323,28 @@
     <h3 class="eyebrow"><span class="num">2</span> 選擇日期與時段</h3>
     <div class="form-group">
       <label>選擇日期 *</label>
-      <input type="date" id="bookingDate" onchange="loadAvailableSlots()">
+      <div class="calendar-nav">
+        <button type="button" class="btn-nav" onclick="changeCalMonth(-1)">‹</button>
+        <span class="month-label" id="calMonthLabel">載入中...</span>
+        <button type="button" class="btn-nav" onclick="changeCalMonth(1)">›</button>
+      </div>
+      <div class="calendar-grid">
+        <div class="calendar-weekday">日</div>
+        <div class="calendar-weekday">一</div>
+        <div class="calendar-weekday">二</div>
+        <div class="calendar-weekday">三</div>
+        <div class="calendar-weekday">四</div>
+        <div class="calendar-weekday">五</div>
+        <div class="calendar-weekday">六</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid" style="margin-top: 5px;">
+        <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
+      </div>
+      <input type="hidden" id="bookingDate">
     </div>
     <label>可預約時段 *</label>
     <div class="slot-grid" id="slotsContainer">
-      <p class="empty-note" style="grid-column: 1/-1;">請先選擇日期</p>
+      <p class="empty-note" style="grid-column: 1/-1;">請先在月曆選擇日期</p>
     </div>
   </div>
 
@@ -325,16 +382,112 @@
     let stylesData = [];
     let addonsData = [];
 
+    // 月曆目前顯示的年/月（month 為 0-11）
+    let calYear, calMonth;
+
+    // 預設常見時段（月曆總覽與時段清單共用）
+    const DEFAULT_SLOTS = ['10:00', '13:00', '15:00', '17:00', '19:00'];
+
     // 初始化頁面
     window.onload = async () => {
       checkSavedCustomer();
       await fetchStylesAndAddons();
+
       // 預設日期為明天
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      document.getElementById('bookingDate').value = tomorrow.toISOString().split('T')[0];
-      loadAvailableSlots();
+      calYear = tomorrow.getFullYear();
+      calMonth = tomorrow.getMonth();
+
+      await loadMonthCalendar();
+      selectCalendarDay(tomorrow.toISOString().split('T')[0]);
     };
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    // 切換月曆顯示的月份
+    function changeCalMonth(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      loadMonthCalendar();
+    }
+
+    // 載入整月的日期總覽，讓顧客一眼看出哪幾天還有空、哪幾天已滿或公休
+    async function loadMonthCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">載入中...</p>';
+
+      const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      document.getElementById('calMonthLabel').textContent = `${calYear} 年 ${monthNames[calMonth]}`;
+
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const startWeekday = new Date(calYear, calMonth, 1).getDay();
+      const startStr = `${calYear}-${pad2(calMonth + 1)}-01`;
+      const endStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(daysInMonth)}`;
+
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr);
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const selectedDate = document.getElementById('bookingDate').value;
+
+      let cells = '';
+      for (let i = 0; i < startWeekday; i++) {
+        cells += `<div class="calendar-day empty"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(day)}`;
+        const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
+        const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
+        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        const openTimes = DEFAULT_SLOTS.filter(t => {
+          const sch = daySchedules.find(s => s.time_slot === t);
+          return sch && sch.is_available === true;
+        });
+        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+
+        let statusClass, statusLabel;
+        if (openTimes.length === 0) {
+          statusClass = 'cal-off';
+          statusLabel = '公休';
+        } else if (remainingTimes.length === 0) {
+          statusClass = 'cal-full';
+          statusLabel = '已滿';
+        } else {
+          statusClass = 'cal-open';
+          statusLabel = '可預約';
+        }
+
+        const isPast = dateStr < todayStr;
+        let extraClass = '';
+        if (dateStr === todayStr) extraClass += ' today';
+        if (dateStr === selectedDate) extraClass += ' selected';
+        if (isPast) extraClass += ' cal-past';
+
+        // 只有「可預約」且非過去的日期才能點擊
+        const clickable = statusClass === 'cal-open' && !isPast;
+        const clickHandler = clickable ? `onclick="selectCalendarDay('${dateStr}')"` : '';
+
+        cells += `
+          <div class="calendar-day ${statusClass}${extraClass}" ${clickHandler}>
+            <div class="day-num">${day}</div>
+            <div class="day-status">${statusLabel}</div>
+          </div>
+        `;
+      }
+
+      grid.innerHTML = cells;
+    }
+
+    // 點選月曆上的日期：帶入日期並載入該天的可預約時段
+    async function selectCalendarDay(dateStr) {
+      document.getElementById('bookingDate').value = dateStr;
+      await loadMonthCalendar();
+      loadAvailableSlots();
+    }
 
     // 檢查 LocalStorage 記憶顧客資料（同裝置快速帶入用）
     function checkSavedCustomer() {
@@ -383,7 +536,7 @@
       if (!lineInput.value && last.line_id) lineInput.value = last.line_id;
 
       note.style.display = 'block';
-      note.innerHTML = `💖 歡迎回來，${last.customer_name}！`;
+      note.innerHTML = `💖 歡迎回來，${last.customer_name}！這是你第 ${data.length + 1} 次預約，我們記得你～`;
     }
 
     // 載入款式與加購資料
@@ -439,7 +592,8 @@
 
       slotsContainer.innerHTML = defaultSlots.map(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
-        const isOff = schedule && schedule.is_available === false;
+        // 預設為未開放，只有店家明確標註 is_available === true 才顯示可預約
+        const isOff = !(schedule && schedule.is_available === true);
         const isBooked = bookedSlots.includes(time);
 
         if (isOff || isBooked) {
