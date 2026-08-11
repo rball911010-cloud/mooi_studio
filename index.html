@@ -42,7 +42,6 @@
       line-height: 1.6;
     }
 
-    /* ---------- Header ---------- */
     .brand { text-align: center; margin-bottom: 30px; }
     .brand .sparkle { font-size: 26px; letter-spacing: 10px; display: block; margin-bottom: 6px; }
     h2.title {
@@ -55,7 +54,6 @@
     }
     .tagline { font-size: 13.5px; color: var(--ink-soft); margin: 0; font-weight: 500; }
 
-    /* ---------- Cards ---------- */
     .card {
       background: var(--card);
       border: 2px solid var(--line);
@@ -89,7 +87,6 @@
       box-shadow: 0 4px 10px -3px rgba(198,133,46,0.6);
     }
 
-    /* ---------- Form ---------- */
     .form-group { margin-bottom: 16px; }
     .form-group:last-child { margin-bottom: 0; }
     label {
@@ -145,7 +142,6 @@
       border: 1.5px dashed var(--accent);
     }
 
-    /* ---------- Monthly calendar (date picker) ---------- */
     .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
     .btn-nav {
       background: var(--bg-alt); color: var(--accent-deep); border: none;
@@ -185,7 +181,6 @@
     .calendar-day.cal-open .day-status { color: #3E7A66; }
     .calendar-day.cal-past { opacity: 0.4; cursor: default; }
 
-    /* ---------- Slot grid ---------- */
     .slot-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -219,7 +214,6 @@
       border-style: dashed;
     }
 
-    /* ---------- Option list ---------- */
     .option-item {
       display: flex;
       justify-content: space-between;
@@ -251,7 +245,6 @@
       white-space: nowrap;
     }
 
-    /* ---------- Total / submit ---------- */
     .total-row {
       display: flex;
       justify-content: space-between;
@@ -383,7 +376,7 @@
   </div>
 
   <script>
-    // 🔗 請替換為你自己的 Supabase URL 與 Anon Key
+    // 🔗 Supabase 連線設定
     const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -401,23 +394,24 @@
     const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
     // ---------- LINE 好友身份 (LIFF) ----------
-    // 👉 到 LINE Developers Console 建立 LIFF App 後，把 LIFF ID 貼在這裡即可啟用；
-    //    沒有填的話會自動略過，不影響其他功能。
     const LIFF_ID = 'Y2011072988-Nzr1UAfi';
     let lineProfile = null; // { userId, displayName, pictureUrl }
 
-    // 👉 你的 LINE 官方帳號 ID（在 LINE 官方帳號管理後台「設定」可查到，格式如 @abc1234）
-    //    填了之後，客人送出預約後可以一鍵把資料傳到你的 LINE，完全免費、不需要額外申請。
+    // 你的 LINE 官方帳號 Basic ID（客人手動傳送用）
     const LINE_OA_ID = '@525kfdtx';
     let lastBookingSummary = '';
 
-    // 👉 部署好 send-line-confirmation 這個 Supabase Edge Function 後，把網址貼在這裡，
-    //    就能在客人是從 LINE 進來（有抓到 LIFF userId）時自動推播預約成功訊息。
-    //    沒填的話會自動略過，改用上面「客人手動傳送」的按鈕，不影響其他功能。
-    const LINE_PUSH_FUNCTION_URL = '';
+    // 部署好的 send-line-confirmation Edge Function 網址
+    const LINE_PUSH_FUNCTION_URL = 'https://tlnodsjkpvupuxlbkuoy.functions.supabase.co/send-line-confirmation';
+
+    // 👉 你（店家管理員）自己的 LINE userId。填了之後，不管客人從 LINE、IG 還是哪裡進來，
+    //    只要預約成功，都會自動推播一則訊息通知你，不需要客人本人有登入 LINE。
+    //    取得方式：用手機在 LINE 裡打開這個頁面網址加上 ?debug=1 一次，
+    //    畫面會跳出一個框顯示你的 userId，複製後貼進這裡，再把這行的預留字換掉。
+    const ADMIN_LINE_USER_ID = 'YOUR-ADMIN-LINE-USER-ID';
 
     async function initLiff() {
-      if (!LIFF_ID || LIFF_ID.includes('Y2011072988-Nzr1UAfi')) return; // 尚未設定 LIFF，略過
+      if (!LIFF_ID || LIFF_ID === 'YOUR-LIFF-ID') return; // 尚未設定 LIFF，略過
       try {
         await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
@@ -426,6 +420,11 @@
           const nameInput = document.getElementById('custName');
           if (nameInput && !nameInput.value && lineProfile.displayName) {
             nameInput.value = lineProfile.displayName;
+          }
+          // 🔧 一次性除錯用：網址加上 ?debug=1，用 LINE 打開頁面時會跳出你的 userId，
+          //    複製後貼進上面的 ADMIN_LINE_USER_ID，測完記得把 ?debug=1 從正式連結拿掉。
+          if (new URLSearchParams(window.location.search).get('debug') === '1') {
+            alert('你的 LINE userId：\n' + lineProfile.userId);
           }
         } else if (liff.isInClient()) {
           // 在 LINE App 內開啟但尚未登入，導向登入
@@ -437,8 +436,6 @@
     }
 
     // ---------- 流量來源判斷 (IG / LINE / 其他) ----------
-    // 在 IG 簡介連結後面加 ?source=instagram，LINE 訊息連結加 ?source=line，
-    // 就能知道這筆預約是從哪個管道進來的（IG 沒有辦法拿到訪客身份，只能標記來源）。
     function detectTrafficSource() {
       const params = new URLSearchParams(window.location.search);
       const fromParam = params.get('source');
@@ -452,6 +449,7 @@
       return 'direct';
     }
     let trafficSource = 'direct';
+    const sourceLabelMap = { line: 'LINE', instagram: 'Instagram', facebook: 'Facebook', direct: '直接連結', referral: '其他連結' };
 
     // 初始化頁面
     window.onload = async () => {
@@ -519,10 +517,10 @@
         let statusClass, statusLabel;
         if (openTimes.length === 0) {
           statusClass = 'cal-off';
-          statusLabel = '已無可預約時間';
+          statusLabel = '公休';
         } else if (remainingTimes.length === 0) {
           statusClass = 'cal-full';
-          statusLabel = '已無可預約時間';
+          statusLabel = '已滿';
         } else {
           statusClass = 'cal-open';
           statusLabel = '可預約';
@@ -614,7 +612,6 @@
       stylesData = styles || [];
       addonsData = addons || [];
 
-      // 渲染款式單選按鈕
       const styleContainer = document.getElementById('styleOptions');
       if (stylesData.length === 0) styleContainer.innerHTML = '<p class="empty-note">尚無可選款式</p>';
       else {
@@ -626,7 +623,6 @@
         `).join('');
       }
 
-      // 渲染加購複選按鈕
       const addonContainer = document.getElementById('addonOptions');
       if (addonsData.length === 0) addonContainer.innerHTML = '<p class="empty-note">無加購項目</p>';
       else {
@@ -648,16 +644,13 @@
       const slotsContainer = document.getElementById('slotsContainer');
       slotsContainer.innerHTML = '載入中...';
 
-      // 預設常見時段
       const defaultSlots = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
-      // 查詢資料庫該日期排程與已預約資料
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
       const { data: dbBookings } = await supabaseClient.from('bookings').select('booking_time').eq('booking_date', date);
 
       const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
 
-      // 只顯示真的有開放且尚未被預約的時段，不列出公休/已額滿的常見時段
       const openSlots = defaultSlots.filter(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
         const isOff = !(schedule && schedule.is_available === true);
@@ -715,10 +708,8 @@
 
       const total = document.getElementById('totalPrice').innerText;
 
-      // 儲存顧客資料至本地儲存區 (同裝置快速帶入)
       localStorage.setItem('eyelash_customer', JSON.stringify({ name, phone, line }));
 
-      // 寫入 Supabase
       const { error } = await supabaseClient.from('bookings').insert([{
         customer_name: name,
         customer_phone: phone,
@@ -737,7 +728,6 @@
       if (error) {
         alert('預約失敗：' + error.message);
       } else {
-        // 組出一段可以直接傳送/複製的預約摘要
         const addonText = selectedAddons.length ? selectedAddons.map(a => a.name).join('、') : '無';
         lastBookingSummary =
           `【美睫預約通知】\n` +
@@ -753,8 +743,19 @@
         document.getElementById('confirmCard').style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // 如果客人是從 LINE 進來、且已透過 LIFF 抓到身份，自動推播預約成功訊息
-        // （沒抓到身份或沒設定 Edge Function 網址時，會自動略過，改用手動傳送按鈕）
+        // 通知你（管理員）：只要預約成功就推播，不管客人是從哪個管道進來、有沒有登入 LINE
+        if (ADMIN_LINE_USER_ID && ADMIN_LINE_USER_ID !== 'YOUR-ADMIN-LINE-USER-ID' && LINE_PUSH_FUNCTION_URL) {
+          fetch(LINE_PUSH_FUNCTION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: ADMIN_LINE_USER_ID,
+              message: `📩 新預約通知\n來源：${sourceLabelMap[trafficSource] || trafficSource}\n\n${lastBookingSummary}`
+            })
+          }).catch(e => console.warn('通知管理員失敗：', e));
+        }
+
+        // 如果客人是從 LINE 進來、且已透過 LIFF 抓到身份，額外自動推播預約成功訊息給客人本人
         if (lineProfile && lineProfile.userId && LINE_PUSH_FUNCTION_URL) {
           fetch(LINE_PUSH_FUNCTION_URL, {
             method: 'POST',
@@ -767,7 +768,7 @@
 
     // 一鍵把預約摘要傳到 LINE（打開 LINE 對話並帶入文字，客人按送出即可，完全免費）
     function sendToLine() {
-      if (!LINE_OA_ID || LINE_OA_ID.includes('@525kfdtx')) {
+      if (!LINE_OA_ID || LINE_OA_ID === 'YOUR-LINE-OA-ID') {
         alert('店家尚未設定 LINE 官方帳號，請改用下方「複製預約摘要」傳送給我們。');
         return;
       }
