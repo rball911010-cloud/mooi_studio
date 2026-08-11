@@ -517,10 +517,10 @@
         let statusClass, statusLabel;
         if (openTimes.length === 0) {
           statusClass = 'cal-off';
-          statusLabel = '公休';
+          statusLabel = '已無可預約時間';
         } else if (remainingTimes.length === 0) {
           statusClass = 'cal-full';
-          statusLabel = '已滿';
+          statusLabel = '已無可預約時間';
         } else {
           statusClass = 'cal-open';
           statusLabel = '可預約';
