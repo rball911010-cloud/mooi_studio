@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOOI_STUDIO美睫後台管理系統 - 月曆排程</title>
+  <title>MOOI|沐意美睫後台管理系統 - 月曆排程</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,14 +16,14 @@
       --bg-alt: #FFE6DC;
       --card: #FFFFFF;
       --line: #FFDCCF;
-      --pink: #FF8FAB;
-      --pink-deep: #F2678C;
-      --peach: #FFB199;
+      --accent: #E0A458;
+      --accent-deep: #C6852E;
+      --peach: #C6852E;
       --mint: #6FCDB0;
       --mint-tint: #E7F8F1;
       --coral: #FF8177;
       --coral-tint: #FFEEEA;
-      --shadow: 0 14px 28px -18px rgba(242, 103, 140, 0.38);
+      --shadow: 0 14px 28px -18px rgba(198, 133, 46, 0.38);
     }
 
     * { box-sizing: border-box; }
@@ -33,8 +33,8 @@
       padding: 32px 24px 60px;
       background-color: var(--bg);
       background-image:
-        radial-gradient(circle at 8% 0%, rgba(255,143,171,0.12), transparent 42%),
-        radial-gradient(circle at 95% 100%, rgba(255,177,153,0.14), transparent 45%);
+        radial-gradient(circle at 8% 0%, rgba(224,164,88,0.12), transparent 42%),
+        radial-gradient(circle at 95% 100%, rgba(111,205,176,0.14), transparent 45%);
       color: var(--ink);
       max-width: 920px;
       margin: 0 auto;
@@ -50,7 +50,7 @@
       font-size: 25px;
       letter-spacing: 0.02em;
       margin: 0 0 6px;
-      color: var(--pink-deep);
+      color: var(--accent-deep);
     }
     .tagline { font-size: 13px; color: var(--ink-soft); margin: 0; font-weight: 500; }
 
@@ -68,14 +68,14 @@
     h3.eyebrow .num {
       font-size: 13px;
       color: #fff;
-      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
       border-radius: 999px;
       width: 24px; height: 24px;
       display: inline-flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       font-family: 'Baloo 2', sans-serif;
       font-weight: 700;
-      box-shadow: 0 4px 10px -3px rgba(242,103,140,0.6);
+      box-shadow: 0 4px 10px -3px rgba(198,133,46,0.6);
     }
 
     .section {
@@ -100,8 +100,8 @@
       color: var(--ink);
     }
     .date-picker-bar input[type="date"]:focus {
-      outline: none; border-color: var(--pink);
-      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(224,164,88,0.18);
     }
 
     .btn-group { display: flex; gap: 10px; margin-left: auto; }
@@ -118,7 +118,7 @@
     }
     .btn:hover { transform: translateY(-1px) scale(1.02); }
     .btn:active { transform: translateY(0) scale(0.98); }
-    .btn { background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%); color: #fff; box-shadow: 0 6px 14px -6px rgba(242,103,140,0.55); }
+    .btn { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); color: #fff; box-shadow: 0 6px 14px -6px rgba(198,133,46,0.55); }
     .btn-secondary { background: var(--bg-alt); color: var(--ink-soft); box-shadow: none; }
     .btn-danger { background: var(--coral); color: #fff; box-shadow: 0 6px 14px -6px rgba(255,129,119,0.45); }
     .btn-save { background: var(--mint); color: #fff; box-shadow: 0 6px 14px -6px rgba(111,205,176,0.45); }
@@ -130,7 +130,7 @@
       padding: 10px 14px;
       margin-bottom: 16px;
     }
-    .hint b { color: var(--pink-deep); }
+    .hint b { color: var(--accent-deep); }
 
     /* ---------- Slot grid (admin) ---------- */
     .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 6px; }
@@ -168,7 +168,8 @@
       color: var(--ink-soft);
       letter-spacing: 0.03em;
     }
-    tbody tr:hover { background: rgba(255,143,171,0.06); }
+    tbody tr:hover { background: rgba(224,164,88,0.06); }
+    tr.new-row td { background: var(--bg-alt); }
     td b { font-family: 'Baloo 2', sans-serif; }
 
     input[type="text"], input[type="number"] {
@@ -182,8 +183,8 @@
       color: var(--ink);
     }
     input[type="text"]:focus, input[type="number"]:focus {
-      outline: none; border-color: var(--pink);
-      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(224,164,88,0.18);
     }
 
     .table-actions { display: flex; gap: 8px; }
@@ -194,7 +195,7 @@
     /* ---------- Monthly calendar overview ---------- */
     .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .btn-nav {
-      background: var(--bg-alt); color: var(--pink-deep); border: none;
+      background: var(--bg-alt); color: var(--accent-deep); border: none;
       width: 34px; height: 34px; border-radius: 999px; font-size: 17px; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: transform .15s ease;
@@ -219,22 +220,22 @@
     .calendar-day.empty { visibility: hidden; cursor: default; }
     .calendar-day .day-num { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 13px; color: var(--ink); }
     .calendar-day .day-status { font-size: 10px; margin-top: auto; font-weight: 700; line-height: 1.3; }
-    .calendar-day.today { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,143,171,0.25); }
-    .calendar-day.selected { background: var(--bg-alt); border-color: var(--pink-deep); }
+    .calendar-day.today { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(224,164,88,0.25); }
+    .calendar-day.selected { background: var(--bg-alt); border-color: var(--accent-deep); }
     .calendar-day.cal-off { background: var(--bg-alt); }
     .calendar-day.cal-off .day-status { color: var(--ink-soft); }
     .calendar-day.cal-full { background: var(--coral-tint); border-color: var(--coral); }
     .calendar-day.cal-full .day-status { color: #B04A3F; }
     .calendar-day.cal-open { background: var(--mint-tint); border-color: var(--mint); }
     .calendar-day.cal-open .day-status { color: #3E7A66; }
-    .calendar-day.cal-past { opacity: 0.45; }
+    .calendar-day.cal-past { opacity: 0.45; cursor: default; }
   </style>
 </head>
 <body>
 
   <div class="brand">
-    <span class="sparkle">✨ 💅 ✨</span>
-    <h2 class="title">美睫後台管理系統</h2>
+    <span class="sparkle">✨ 🌿 ✨</span>
+    <h2 class="title">MOOI|沐意美睫後台管理系統</h2>
     <p class="tagline">排程・款式・預約，一頁掌握</p>
   </div>
 
@@ -259,7 +260,7 @@
       <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
     </div>
     <div class="hint" style="margin-top: 14px; margin-bottom: 0;">
-      💡 點擊日期可快速跳到下方時段管理；<b style="color:#3E7A66;">綠色</b>代表尚有空位、<b style="color:#B04A3F;">紅色</b>代表已滿、灰色代表公休/未開放。
+      💡 <b>灰色（公休）</b>的日期點一下會直接開放當天全部時段；<b style="color:#3E7A66;">綠色</b>（尚有空位）或<b style="color:#B04A3F;">紅色</b>（已滿）的日期點下去會跳到下方，方便你調整個別時段或查看預約明細。
     </div>
   </div>
 
@@ -320,13 +321,16 @@
   </div>
 
   <script>
+
     // 🔗 Supabase 正確設定 (不帶末尾斜線或 /rest/v1)
+
     const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE'; // 👈 請確認貼上完整的 anon key
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 預設常見時段
     const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
+
 
     // 月曆總覽目前顯示的年/月（month 為 0-11）
     let calYear, calMonth;
@@ -395,22 +399,25 @@
         let statusClass, statusLabel;
         if (openTimes.length === 0) {
           statusClass = 'cal-off';
-          statusLabel = '公休';
+          statusLabel = '無可預約時間';
         } else if (remainingTimes.length === 0) {
           statusClass = 'cal-full';
-          statusLabel = '已滿';
+          statusLabel = '無可預約時間';
         } else {
           statusClass = 'cal-open';
           statusLabel = remainingTimes.join('、');
         }
 
         let extraClass = '';
+        const isPast = dateStr < todayStr;
         if (dateStr === todayStr) extraClass += ' today';
         if (dateStr === selectedDate) extraClass += ' selected';
-        if (dateStr < todayStr) extraClass += ' cal-past';
+        if (isPast) extraClass += ' cal-past';
+
+        const clickHandler = isPast ? '' : `onclick="onCalendarDayClick('${dateStr}', '${statusClass}')"`;
 
         cells += `
-          <div class="calendar-day ${statusClass}${extraClass}" onclick="jumpToDate('${dateStr}')">
+          <div class="calendar-day ${statusClass}${extraClass}" ${clickHandler}>
             <div class="day-num">${day}</div>
             <div class="day-status">${statusLabel}</div>
           </div>
@@ -418,6 +425,34 @@
       }
 
       grid.innerHTML = cells;
+    }
+
+    // 點擊月曆上的日期：公休的日子直接一鍵開放全部時段；已有排程的日子則跳到下方細部管理
+    function onCalendarDayClick(dateStr, statusClass) {
+      if (statusClass === 'cal-off') {
+        quickOpenDay(dateStr);
+      } else {
+        jumpToDate(dateStr);
+      }
+    }
+
+    // 一鍵開放指定日期的全部預設時段（直接從月曆點擊觸發）
+    async function quickOpenDay(dateStr) {
+      const upsertData = DEFAULT_SLOTS.map(time => ({
+        date: dateStr,
+        time_slot: time,
+        is_available: true
+      }));
+
+      const { error } = await supabaseClient
+        .from('schedules')
+        .upsert(upsertData, { onConflict: 'date, time_slot' });
+
+      if (error) { alert('開放失敗：' + error.message); return; }
+
+      document.getElementById('adminDate').value = dateStr;
+      loadScheduleAndBookings();
+      loadMonthCalendar();
     }
 
     // 點擊月曆上的日期，跳到下方時段管理並帶入該日期
@@ -468,7 +503,7 @@
           return `
             <div class="slot-card off" onclick="toggleSlotStatus('${date}', '${time}', true)">
               <div class="time">${time}</div>
-              <div class="status-label">⚪ 公休/不開放</div>
+              <div class="status-label">⚪ 不開放</div>
               <div class="toggle-tip">點擊開放預約</div>
             </div>
           `;
@@ -565,13 +600,41 @@
       }
     }
 
-    async function addStyleRow() {
-      const name = prompt('請輸入新款式名稱：');
-      const price = prompt('請輸入價格：');
-      if (name && price) {
-        await supabaseClient.from('eyelash_styles').insert([{ name, price: Number(price) }]);
-        loadStyles();
-      }
+    // 新增一列可直接編輯的空白款式列（不使用彈出視窗）
+    function addStyleRow() {
+      const tbody = document.querySelector('#stylesTable tbody');
+      const emptyRow = tbody.querySelector('.empty-note');
+      if (emptyRow) emptyRow.closest('tr')?.remove();
+
+      const tempId = 'new-' + Date.now();
+      const row = document.createElement('tr');
+      row.id = tempId;
+      row.className = 'new-row';
+      row.innerHTML = `
+        <td><input type="text" id="style-name-${tempId}" placeholder="請輸入款式名稱"></td>
+        <td><input type="number" id="style-price-${tempId}" placeholder="0"></td>
+        <td class="table-actions">
+          <button class="btn btn-save" onclick="createStyle('${tempId}')">新增</button>
+          <button class="btn btn-secondary" onclick="cancelNewRow('${tempId}')">取消</button>
+        </td>
+      `;
+      tbody.prepend(row);
+      document.getElementById(`style-name-${tempId}`).focus();
+    }
+
+    async function createStyle(tempId) {
+      const name = document.getElementById(`style-name-${tempId}`).value.trim();
+      const price = document.getElementById(`style-price-${tempId}`).value;
+      if (!name || !price) { alert('請填寫款式名稱與價格'); return; }
+
+      const { error } = await supabaseClient.from('eyelash_styles').insert([{ name, price: Number(price) }]);
+      if (error) { alert('新增失敗：' + error.message); return; }
+      loadStyles();
+    }
+
+    // 取消一列還沒儲存的新增列
+    function cancelNewRow(tempId) {
+      document.getElementById(tempId)?.remove();
     }
 
     // --- 3. 加購管理邏輯 ---
@@ -604,13 +667,36 @@
       }
     }
 
-    async function addAddonRow() {
-      const name = prompt('請輸入新加購名稱：');
-      const price = prompt('請輸入價格：');
-      if (name && price) {
-        await supabaseClient.from('add_ons').insert([{ name, price: Number(price) }]);
-        loadAddons();
-      }
+    // 新增一列可直接編輯的空白加購列（不使用彈出視窗）
+    function addAddonRow() {
+      const tbody = document.querySelector('#addonsTable tbody');
+      const emptyRow = tbody.querySelector('.empty-note');
+      if (emptyRow) emptyRow.closest('tr')?.remove();
+
+      const tempId = 'new-' + Date.now();
+      const row = document.createElement('tr');
+      row.id = tempId;
+      row.className = 'new-row';
+      row.innerHTML = `
+        <td><input type="text" id="addon-name-${tempId}" placeholder="請輸入加購名稱"></td>
+        <td><input type="number" id="addon-price-${tempId}" placeholder="0"></td>
+        <td class="table-actions">
+          <button class="btn btn-save" onclick="createAddon('${tempId}')">新增</button>
+          <button class="btn btn-secondary" onclick="cancelNewRow('${tempId}')">取消</button>
+        </td>
+      `;
+      tbody.prepend(row);
+      document.getElementById(`addon-name-${tempId}`).focus();
+    }
+
+    async function createAddon(tempId) {
+      const name = document.getElementById(`addon-name-${tempId}`).value.trim();
+      const price = document.getElementById(`addon-price-${tempId}`).value;
+      if (!name || !price) { alert('請填寫加購名稱與價格'); return; }
+
+      const { error } = await supabaseClient.from('add_ons').insert([{ name, price: Number(price) }]);
+      if (error) { alert('新增失敗：' + error.message); return; }
+      loadAddons();
     }
   </script>
 </body>
