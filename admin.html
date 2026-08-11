@@ -3,28 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>美睫後台管理系統 - 月曆排程</title>
+  <title>MOOI_STUDIO美睫後台管理系統 - 月曆排程</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #2A231E;
-      --ink-soft: #7A6C5D;
-      --bg: #F2ECE2;
-      --bg-alt: #EAE1D2;
-      --card: #FFFDFA;
-      --line: #E1D3BE;
-      --gold: #A17A3E;
-      --gold-deep: #8A6530;
-      --rose: #AD7B87;
-      --rose-deep: #8B5E6C;
-      --sage: #7C8F70;
-      --sage-tint: #EEF1E9;
-      --rust: #A85B4C;
-      --rust-tint: #F5E9E5;
-      --shadow: 0 10px 30px -16px rgba(42, 35, 30, 0.28);
+      --ink: #5A4038;
+      --ink-soft: #A3877B;
+      --bg: #FFF3EE;
+      --bg-alt: #FFE6DC;
+      --card: #FFFFFF;
+      --line: #FFDCCF;
+      --pink: #FF8FAB;
+      --pink-deep: #F2678C;
+      --peach: #FFB199;
+      --mint: #6FCDB0;
+      --mint-tint: #E7F8F1;
+      --coral: #FF8177;
+      --coral-tint: #FFEEEA;
+      --shadow: 0 14px 28px -18px rgba(242, 103, 140, 0.38);
     }
 
     * { box-sizing: border-box; }
@@ -34,178 +33,234 @@
       padding: 32px 24px 60px;
       background-color: var(--bg);
       background-image:
-        radial-gradient(circle at 10% 0%, rgba(161,122,62,0.06), transparent 40%),
-        radial-gradient(circle at 95% 100%, rgba(173,123,135,0.07), transparent 45%);
+        radial-gradient(circle at 8% 0%, rgba(255,143,171,0.12), transparent 42%),
+        radial-gradient(circle at 95% 100%, rgba(255,177,153,0.14), transparent 45%);
       color: var(--ink);
       max-width: 920px;
       margin: 0 auto;
       line-height: 1.6;
     }
 
-    /* ---------- Header / brand mark ---------- */
-    .brand { text-align: center; margin-bottom: 30px; }
-    .lash-mark { width: 96px; height: 34px; margin: 0 auto 12px; display: block; }
-    .lash-mark path.stroke { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; }
-    .lash-mark path.fiber { fill: none; stroke: var(--rose); stroke-width: 1.3; stroke-linecap: round; opacity: 0.85; }
+    /* ---------- Header ---------- */
+    .brand { text-align: center; margin-bottom: 28px; }
+    .brand .sparkle { font-size: 24px; letter-spacing: 10px; display: block; margin-bottom: 6px; }
     h2.title {
-      font-family: 'Noto Serif TC', serif;
-      font-weight: 700;
-      font-size: 24px;
-      letter-spacing: 0.05em;
+      font-family: 'Baloo 2', 'Noto Sans TC', sans-serif;
+      font-weight: 800;
+      font-size: 25px;
+      letter-spacing: 0.02em;
       margin: 0 0 6px;
+      color: var(--pink-deep);
     }
-    .tagline { font-size: 13px; color: var(--ink-soft); margin: 0; }
+    .tagline { font-size: 13px; color: var(--ink-soft); margin: 0; font-weight: 500; }
 
     h3.eyebrow {
-      font-family: 'Noto Serif TC', serif;
-      font-weight: 600;
+      font-family: 'Baloo 2', 'Noto Sans TC', sans-serif;
+      font-weight: 700;
       font-size: 17px;
       display: flex;
-      align-items: baseline;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
       margin: 0 0 18px;
       padding-bottom: 12px;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 2px dashed var(--line);
     }
     h3.eyebrow .num {
-      font-size: 12px;
-      color: var(--gold);
-      border: 1px solid var(--gold);
+      font-size: 13px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
       border-radius: 999px;
-      width: 20px; height: 20px;
+      width: 24px; height: 24px;
       display: inline-flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      font-family: 'Noto Sans TC', sans-serif;
-      font-weight: 600;
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      box-shadow: 0 4px 10px -3px rgba(242,103,140,0.6);
     }
 
     .section {
       background: var(--card);
       padding: 24px 26px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      margin-bottom: 24px;
+      border: 2px solid var(--line);
+      border-radius: 24px;
+      margin-bottom: 22px;
       box-shadow: var(--shadow);
     }
 
     /* ---------- Date bar / actions ---------- */
     .date-picker-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
-    .date-picker-bar label { font-weight: 600; font-size: 13.5px; color: var(--ink-soft); }
+    .date-picker-bar label { font-weight: 700; font-size: 13.5px; color: var(--ink-soft); }
     .date-picker-bar input[type="date"] {
       font-size: 15px;
-      padding: 9px 12px;
-      border: 1px solid var(--line);
-      border-radius: 9px;
+      padding: 10px 13px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
       font-family: inherit;
-      background: #FFFEFC;
+      background: #FFFCFB;
       color: var(--ink);
     }
     .date-picker-bar input[type="date"]:focus {
-      outline: none; border-color: var(--rose);
-      box-shadow: 0 0 0 3px rgba(173,123,135,0.15);
+      outline: none; border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
     }
 
     .btn-group { display: flex; gap: 10px; margin-left: auto; }
     .btn {
-      padding: 9px 16px;
+      padding: 10px 18px;
       border: none;
-      border-radius: 9px;
+      border-radius: 999px;
       cursor: pointer;
       font-weight: 700;
       font-size: 13.5px;
       font-family: 'Noto Sans TC', sans-serif;
       letter-spacing: 0.02em;
-      transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+      transition: transform .14s ease, box-shadow .14s ease;
     }
-    .btn:hover { transform: translateY(-1px); }
-    .btn:active { transform: translateY(0); }
-    .btn { background: var(--gold); color: #FFF9F0; box-shadow: 0 6px 14px -6px rgba(138,101,48,0.5); }
+    .btn:hover { transform: translateY(-1px) scale(1.02); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn { background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%); color: #fff; box-shadow: 0 6px 14px -6px rgba(242,103,140,0.55); }
     .btn-secondary { background: var(--bg-alt); color: var(--ink-soft); box-shadow: none; }
-    .btn-danger { background: var(--rust); color: #FFF6F3; box-shadow: 0 6px 14px -6px rgba(168,91,76,0.4); }
-    .btn-save { background: var(--rose); color: #FFF6F8; box-shadow: 0 6px 14px -6px rgba(173,123,135,0.4); }
+    .btn-danger { background: var(--coral); color: #fff; box-shadow: 0 6px 14px -6px rgba(255,129,119,0.45); }
+    .btn-save { background: var(--mint); color: #fff; box-shadow: 0 6px 14px -6px rgba(111,205,176,0.45); }
 
     .hint {
       font-size: 13px; color: var(--ink-soft);
       background: var(--bg-alt);
-      border-radius: 10px;
+      border-radius: 14px;
       padding: 10px 14px;
       margin-bottom: 16px;
     }
-    .hint b { color: var(--gold-deep); }
+    .hint b { color: var(--pink-deep); }
 
     /* ---------- Slot grid (admin) ---------- */
     .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 6px; }
     .slot-card {
-      border: 1.5px solid var(--line);
-      border-radius: 12px;
+      border: 2px solid var(--line);
+      border-radius: 16px;
       padding: 14px 12px;
       text-align: center;
       cursor: pointer;
       transition: all .16s ease;
       user-select: none;
-      background: #FFFEFC;
+      background: #FFFCFB;
     }
-    .slot-card:hover { transform: translateY(-2px); }
-    .slot-card .time { font-family: 'Noto Serif TC', serif; font-weight: 700; font-size: 15.5px; }
-    .slot-card.available { border-color: var(--sage); background-color: var(--sage-tint); color: #4E5D45; }
+    .slot-card:hover { transform: translateY(-2px) scale(1.02); }
+    .slot-card .time { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 15.5px; }
+    .slot-card.available { border-color: var(--mint); background-color: var(--mint-tint); color: #3E7A66; }
     .slot-card.off { border-color: var(--line); background-color: var(--bg-alt); color: var(--ink-soft); }
-    .slot-card.booked { border-color: var(--rust); background-color: var(--rust-tint); color: #7A3B2F; cursor: default; }
+    .slot-card.booked { border-color: var(--coral); background-color: var(--coral-tint); color: #B04A3F; cursor: default; }
     .slot-card.booked:hover { transform: none; }
     .slot-card .status-label { font-size: 11.5px; margin-top: 5px; font-weight: 700; letter-spacing: 0.02em; }
     .slot-card .cust-label {
-      font-size: 12.5px; margin-top: 8px; background: rgba(255,255,255,0.75);
-      padding: 4px 6px; border-radius: 6px; word-break: break-all;
+      font-size: 12.5px; margin-top: 8px; background: rgba(255,255,255,0.8);
+      padding: 4px 6px; border-radius: 8px; word-break: break-all;
     }
     .slot-card .toggle-tip { font-size: 10.5px; margin-top: 5px; opacity: 0.75; }
 
     /* ---------- Tables ---------- */
     table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
-    th, td { border-bottom: 1px solid var(--line); padding: 12px 10px; text-align: left; vertical-align: middle; }
+    th, td { border-bottom: 1.5px dashed var(--line); padding: 12px 10px; text-align: left; vertical-align: middle; }
     th {
       background: transparent;
-      font-family: 'Noto Serif TC', serif;
-      font-weight: 600;
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
       font-size: 13px;
       color: var(--ink-soft);
       letter-spacing: 0.03em;
     }
-    tbody tr:hover { background: rgba(161,122,62,0.05); }
-    td b { font-family: 'Noto Serif TC', serif; }
+    tbody tr:hover { background: rgba(255,143,171,0.06); }
+    td b { font-family: 'Baloo 2', sans-serif; }
 
     input[type="text"], input[type="number"] {
       width: 90%;
       padding: 8px 10px;
-      border: 1px solid var(--line);
-      border-radius: 7px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
       font-family: inherit;
       font-size: 14px;
-      background: #FFFEFC;
+      background: #FFFCFB;
       color: var(--ink);
     }
     input[type="text"]:focus, input[type="number"]:focus {
-      outline: none; border-color: var(--rose);
-      box-shadow: 0 0 0 3px rgba(173,123,135,0.15);
+      outline: none; border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
     }
 
     .table-actions { display: flex; gap: 8px; }
     .empty-note { color: var(--ink-soft); text-align: center; padding: 14px; }
 
     .add-row-btn { margin-top: 14px; }
+
+    /* ---------- Monthly calendar overview ---------- */
+    .calendar-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .btn-nav {
+      background: var(--bg-alt); color: var(--pink-deep); border: none;
+      width: 34px; height: 34px; border-radius: 999px; font-size: 17px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: transform .15s ease;
+    }
+    .btn-nav:hover { transform: scale(1.12); }
+    .month-label { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 18px; color: var(--ink); }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .calendar-weekday { text-align: center; font-size: 11px; font-weight: 700; color: var(--ink-soft); padding-bottom: 4px; }
+    .calendar-day {
+      min-height: 72px;
+      border-radius: 12px;
+      border: 2px solid var(--line);
+      padding: 6px;
+      cursor: pointer;
+      background: #FFFCFB;
+      display: flex;
+      flex-direction: column;
+      transition: all .15s ease;
+    }
+    .calendar-day:hover { transform: translateY(-2px) scale(1.03); }
+    .calendar-day.empty { visibility: hidden; cursor: default; }
+    .calendar-day .day-num { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 13px; color: var(--ink); }
+    .calendar-day .day-status { font-size: 10px; margin-top: auto; font-weight: 700; line-height: 1.3; }
+    .calendar-day.today { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,143,171,0.25); }
+    .calendar-day.selected { background: var(--bg-alt); border-color: var(--pink-deep); }
+    .calendar-day.cal-off { background: var(--bg-alt); }
+    .calendar-day.cal-off .day-status { color: var(--ink-soft); }
+    .calendar-day.cal-full { background: var(--coral-tint); border-color: var(--coral); }
+    .calendar-day.cal-full .day-status { color: #B04A3F; }
+    .calendar-day.cal-open { background: var(--mint-tint); border-color: var(--mint); }
+    .calendar-day.cal-open .day-status { color: #3E7A66; }
+    .calendar-day.cal-past { opacity: 0.45; }
   </style>
 </head>
 <body>
 
   <div class="brand">
-    <svg class="lash-mark" viewBox="0 0 120 40" aria-hidden="true">
-      <path class="stroke" d="M6 32 Q45 6 114 12" />
-      <path class="fiber" d="M24 26 L20 14" />
-      <path class="fiber" d="M42 18 L40 6" />
-      <path class="fiber" d="M62 14 L62 3" />
-      <path class="fiber" d="M82 12 L85 2" />
-      <path class="fiber" d="M100 12 L105 3" />
-    </svg>
+    <span class="sparkle">✨ 💅 ✨</span>
     <h2 class="title">美睫後台管理系統</h2>
     <p class="tagline">排程・款式・預約，一頁掌握</p>
+  </div>
+
+  <!-- 0. 本月排程總覽 -->
+  <div class="section">
+    <h3 class="eyebrow"><span class="num">📅</span> 本月排程總覽</h3>
+    <div class="calendar-nav">
+      <button class="btn-nav" onclick="changeMonth(-1)">‹</button>
+      <span class="month-label" id="calMonthLabel">載入中...</span>
+      <button class="btn-nav" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="calendar-grid">
+      <div class="calendar-weekday">日</div>
+      <div class="calendar-weekday">一</div>
+      <div class="calendar-weekday">二</div>
+      <div class="calendar-weekday">三</div>
+      <div class="calendar-weekday">四</div>
+      <div class="calendar-weekday">五</div>
+      <div class="calendar-weekday">六</div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid" style="margin-top: 6px;">
+      <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
+    </div>
+    <div class="hint" style="margin-top: 14px; margin-bottom: 0;">
+      💡 點擊日期可快速跳到下方時段管理；<b style="color:#3E7A66;">綠色</b>代表尚有空位、<b style="color:#B04A3F;">紅色</b>代表已滿、灰色代表公休/未開放。
+    </div>
   </div>
 
   <!-- 1. 月曆排程管理 (可開關時段、查看已滿) -->
@@ -221,7 +276,7 @@
     </div>
 
     <div class="hint">
-      💡 提示：點擊狀態為 <b>「可預約」</b> 或 <b>「公休」</b> 的時段可自由切換狀態；已被顧客預約的時段為 <b>「已客滿」</b>。
+      💡 提示：時段預設為 <b>「公休/未開放」</b>，點擊即可開放預約；已開放的時段再點一次可收回；已被顧客預約的時段為 <b>「已客滿」</b>。
     </div>
 
     <div class="slot-grid" id="adminSlotsContainer">
@@ -271,17 +326,107 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 預設常見時段
-    const DEFAULT_SLOTS = ['10:00', '13:00', '15:30', '18:00', '20:00'];
+    const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
+
+    // 月曆總覽目前顯示的年/月（month 為 0-11）
+    let calYear, calMonth;
 
     window.onload = () => {
       // 預設日期為今天
-      const today = new Date().toISOString().split('T')[0];
+      const todayDate = new Date();
+      const today = todayDate.toISOString().split('T')[0];
       document.getElementById('adminDate').value = today;
+      calYear = todayDate.getFullYear();
+      calMonth = todayDate.getMonth();
 
       loadScheduleAndBookings();
+      loadMonthCalendar();
       loadStyles();
       loadAddons();
     };
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+
+    // 切換月曆總覽的月份
+    function changeMonth(delta) {
+      calMonth += delta;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      loadMonthCalendar();
+    }
+
+    // 載入整月的排程總覽（一眼看出哪幾天已開放、已滿、公休）
+    async function loadMonthCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">載入中...</p>';
+
+      const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      document.getElementById('calMonthLabel').textContent = `${calYear} 年 ${monthNames[calMonth]}`;
+
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const startWeekday = new Date(calYear, calMonth, 1).getDay();
+      const startStr = `${calYear}-${pad2(calMonth + 1)}-01`;
+      const endStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(daysInMonth)}`;
+
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr);
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const selectedDate = document.getElementById('adminDate').value;
+
+      let cells = '';
+      for (let i = 0; i < startWeekday; i++) {
+        cells += `<div class="calendar-day empty"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(day)}`;
+        const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
+        const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
+        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        // 只有明確被開放（is_available === true）的時段才算開放
+        const openTimes = DEFAULT_SLOTS.filter(t => {
+          const sch = daySchedules.find(s => s.time_slot === t);
+          return sch && sch.is_available === true;
+        });
+        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+
+        let statusClass, statusLabel;
+        if (openTimes.length === 0) {
+          statusClass = 'cal-off';
+          statusLabel = '公休';
+        } else if (remainingTimes.length === 0) {
+          statusClass = 'cal-full';
+          statusLabel = '已滿';
+        } else {
+          statusClass = 'cal-open';
+          statusLabel = remainingTimes.join('、');
+        }
+
+        let extraClass = '';
+        if (dateStr === todayStr) extraClass += ' today';
+        if (dateStr === selectedDate) extraClass += ' selected';
+        if (dateStr < todayStr) extraClass += ' cal-past';
+
+        cells += `
+          <div class="calendar-day ${statusClass}${extraClass}" onclick="jumpToDate('${dateStr}')">
+            <div class="day-num">${day}</div>
+            <div class="day-status">${statusLabel}</div>
+          </div>
+        `;
+      }
+
+      grid.innerHTML = cells;
+    }
+
+    // 點擊月曆上的日期，跳到下方時段管理並帶入該日期
+    function jumpToDate(dateStr) {
+      document.getElementById('adminDate').value = dateStr;
+      loadScheduleAndBookings();
+      loadMonthCalendar();
+      document.getElementById('adminSlotsContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     // --- 1. 月曆排程管理邏輯 ---
     async function loadScheduleAndBookings() {
@@ -299,8 +444,8 @@
         const schedule = dbSchedules?.find(s => s.time_slot === time);
         const booking = dbBookings?.find(b => b.booking_time === time);
 
-        // 是否公休（預設 true 可預約，除非資料庫特別標註 false）
-        const isAvailable = schedule ? schedule.is_available : true;
+        // 預設為公休／未開放，只有資料庫明確標註 is_available === true 才算開放
+        const isAvailable = schedule ? schedule.is_available === true : false;
         const isBooked = !!booking;
 
         if (isBooked) {
@@ -340,7 +485,7 @@
         .upsert({ date, time_slot: timeSlot, is_available: targetStatus }, { onConflict: 'date, time_slot' });
 
       if (error) alert('更新狀態失敗：' + error.message);
-      else loadScheduleAndBookings();
+      else { loadScheduleAndBookings(); loadMonthCalendar(); }
     }
 
     // 一鍵設定全天公休或開放
@@ -359,7 +504,7 @@
         .upsert(upsertData, { onConflict: 'date, time_slot' });
 
       if (error) alert('批次更新失敗：' + error.message);
-      else loadScheduleAndBookings();
+      else { loadScheduleAndBookings(); loadMonthCalendar(); }
     }
 
     // 渲染當天預約表格
