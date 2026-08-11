@@ -5,39 +5,146 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>美睫線上預約</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #c5a059;
-      --bg: #fdfbf7;
-      --text: #4a4a4a;
-      --border: #e2d7c5;
+      --ink: #5A4038;
+      --ink-soft: #A3877B;
+      --bg: #FFF3EE;
+      --bg-alt: #FFE6DC;
+      --card: #FFFFFF;
+      --line: #FFDCCF;
+      --pink: #FF8FAB;
+      --pink-deep: #F2678C;
+      --peach: #FFB199;
+      --mint: #6FCDB0;
+      --mint-tint: #E7F8F1;
+      --coral: #FF8177;
+      --coral-tint: #FFEEEA;
+      --shadow: 0 14px 28px -16px rgba(242, 103, 140, 0.35);
     }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: var(--bg);
-      color: var(--text);
+      background-image:
+        radial-gradient(circle at 10% 0%, rgba(255,143,171,0.14), transparent 42%),
+        radial-gradient(circle at 95% 100%, rgba(255,177,153,0.16), transparent 45%);
+      color: var(--ink);
       max-width: 600px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 32px 20px 60px;
+      line-height: 1.6;
     }
-    h2, h3 { color: #2c2c2c; text-align: center; }
+
+    /* ---------- Header ---------- */
+    .brand { text-align: center; margin-bottom: 30px; }
+    .brand .sparkle { font-size: 26px; letter-spacing: 10px; display: block; margin-bottom: 6px; }
+    h2.title {
+      font-family: 'Baloo 2', 'Noto Sans TC', sans-serif;
+      font-weight: 800;
+      font-size: 27px;
+      letter-spacing: 0.02em;
+      margin: 0 0 8px;
+      color: var(--pink-deep);
+    }
+    .tagline { font-size: 13.5px; color: var(--ink-soft); margin: 0; font-weight: 500; }
+
+    /* ---------- Cards ---------- */
     .card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 24px;
+      padding: 24px 22px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      box-shadow: var(--shadow);
+      position: relative;
     }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; }
+
+    .eyebrow {
+      font-family: 'Baloo 2', 'Noto Sans TC', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+    }
+    .eyebrow .num {
+      font-size: 13px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      border-radius: 999px;
+      width: 24px; height: 24px;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      box-shadow: 0 4px 10px -3px rgba(242,103,140,0.6);
+    }
+
+    /* ---------- Form ---------- */
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--ink-soft);
+    }
     input[type="text"], input[type="tel"], input[type="date"], select {
       width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      box-sizing: border-box;
+      padding: 12px 14px;
+      border: 2px solid var(--line);
+      background: #FFFCFB;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      transition: border-color .18s ease, box-shadow .18s ease;
     }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255,143,171,0.18);
+    }
+    input::placeholder { color: #D6B7AC; }
+
+    .quick-fill {
+      font-size: 12px;
+      color: var(--pink-deep);
+      cursor: pointer;
+      font-weight: 700;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-alt);
+      padding: 5px 12px;
+      border-radius: 999px;
+      transition: transform .15s ease;
+    }
+    .quick-fill:hover { transform: scale(1.05); }
+
+    .history-note {
+      display: none;
+      margin-top: 10px;
+      background: var(--bg-alt);
+      color: var(--pink-deep);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1.5px dashed var(--pink);
+    }
+
+    /* ---------- Slot grid ---------- */
     .slot-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -45,102 +152,165 @@
       margin-top: 10px;
     }
     .slot-btn {
-      padding: 10px;
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 6px;
+      padding: 13px 6px;
+      border: 2px solid var(--line);
+      background: #FFFCFB;
+      border-radius: 14px;
       cursor: pointer;
       text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      transition: all .16s ease;
     }
+    .slot-btn:hover { border-color: var(--pink); transform: translateY(-2px) scale(1.02); }
     .slot-btn.selected {
-      background: var(--primary);
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
       color: #fff;
-      border-color: var(--primary);
+      border-color: var(--pink-deep);
+      font-weight: 700;
+      box-shadow: 0 6px 14px -6px rgba(242,103,140,0.6);
     }
     .slot-btn.disabled {
-      background: #f0f0f0;
-      color: #ccc;
+      background: var(--bg-alt);
+      color: #E0B8AC;
       cursor: not-allowed;
+      border-style: dashed;
     }
+
+    /* ---------- Option list ---------- */
     .option-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 6px;
+      border-bottom: 1.5px dashed var(--line);
+      font-size: 14.5px;
     }
+    .option-item:last-child { border-bottom: none; }
+    .option-item label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+    .option-item input[type="radio"], .option-item input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--pink-deep);
+      cursor: pointer;
+    }
+    .option-item .price {
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      color: var(--pink-deep);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    /* ---------- Total / submit ---------- */
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 2px dashed var(--line);
+    }
+    .total-label { font-size: 14px; color: var(--ink-soft); font-weight: 700; }
+    .total-value {
+      font-family: 'Baloo 2', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--pink-deep);
+    }
+    .total-value .currency { font-size: 15px; color: var(--peach); margin-right: 3px; }
+
     .btn-submit {
       width: 100%;
-      background: var(--primary);
-      color: white;
-      padding: 14px;
+      background: linear-gradient(135deg, var(--pink) 0%, var(--pink-deep) 100%);
+      color: #fff;
+      padding: 16px;
       border: none;
-      border-radius: 6px;
+      border-radius: 999px;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      font-family: 'Baloo 2', sans-serif;
       cursor: pointer;
+      box-shadow: 0 10px 22px -8px rgba(242,103,140,0.6);
+      transition: transform .15s ease, box-shadow .15s ease;
     }
-    .quick-fill {
-      font-size: 12px;
-      color: var(--primary);
-      cursor: pointer;
-      float: right;
-    }
+    .btn-submit:hover { transform: translateY(-2px) scale(1.01); }
+    .btn-submit:active { transform: translateY(0) scale(0.99); }
+
+    .empty-note { color: var(--ink-soft); font-size: 13.5px; text-align: center; padding: 10px 0; }
   </style>
 </head>
 <body>
 
-  <h2>✨ 美睫線上預約表 ✨</h2>
+  <div class="brand">
+    <span class="sparkle">✨ 💕 ✨</span>
+    <h2 class="title">美睫線上預約</h2>
+    <p class="tagline">選定時段，交給我們把細節做好</p>
+  </div>
 
-  <!-- 1. 個人資訊與快速載入 -->
+  <!-- 1. 個人資訊 -->
   <div class="card">
-    <h3>1. 個人資訊 <span class="quick-fill" id="btnQuickFill" style="display:none;" onclick="loadSavedCustomer()">⚡ 自動帶入上次資料</span></h3>
+    <h3 class="eyebrow">
+      <span class="num">1</span> 個人資訊
+      <span class="quick-fill" id="btnQuickFill" style="display:none;" onclick="loadSavedCustomer()">⚡ 帶入上次資料</span>
+    </h3>
     <div class="form-group">
       <label>姓名 *</label>
       <input type="text" id="custName" placeholder="請輸入姓名" required>
     </div>
     <div class="form-group">
       <label>電話 *</label>
-      <input type="tel" id="custPhone" placeholder="請輸入手機號碼" required>
+      <input type="tel" id="custPhone" placeholder="請輸入手機號碼" required onchange="checkReturningCustomer()">
+      <p class="history-note" id="historyNote"></p>
     </div>
     <div class="form-group">
       <label>LINE ID</label>
-      <input type="text" id="custLine" placeholder="方便聯繫溝通 (選填)">
+      <input type="text" id="custLine" placeholder="方便聯繫溝通（選填）">
     </div>
   </div>
 
   <!-- 2. 月曆與時段選擇 -->
   <div class="card">
-    <h3>2. 選擇預約日期與時段</h3>
+    <h3 class="eyebrow"><span class="num">2</span> 選擇日期與時段</h3>
     <div class="form-group">
       <label>選擇日期 *</label>
       <input type="date" id="bookingDate" onchange="loadAvailableSlots()">
     </div>
     <label>可預約時段 *</label>
     <div class="slot-grid" id="slotsContainer">
-      <p style="color:#999; grid-column: 1/-1; text-align:center;">請先選擇日期</p>
+      <p class="empty-note" style="grid-column: 1/-1;">請先選擇日期</p>
     </div>
   </div>
 
   <!-- 3. 款式與加購選擇 -->
   <div class="card">
-    <h3>3. 選擇美睫款式與加購項目</h3>
+    <h3 class="eyebrow"><span class="num">3</span> 款式與加購</h3>
     <div class="form-group">
       <label>美睫款式 *</label>
       <div id="styleOptions">載入中...</div>
     </div>
-    <div class="form-group" style="margin-top:20px;">
-      <label>加購項目 (複選)</label>
+    <div class="form-group" style="margin-top:18px;">
+      <label>加購項目（複選）</label>
       <div id="addonOptions">載入中...</div>
     </div>
   </div>
 
   <!-- 4. 總計與送出 -->
   <div class="card">
-    <div style="font-size:18px; font-weight:bold; margin-bottom:15px; text-align:right;">
-      預計金額：NT$ <span id="totalPrice">0</span>
+    <div class="total-row">
+      <span class="total-label">預計金額</span>
+      <span class="total-value"><span class="currency">NT$</span><span id="totalPrice">0</span></span>
     </div>
-    <button class="btn-submit" onclick="submitBooking()">確認並送出預約</button>
+    <button class="btn-submit" onclick="submitBooking()">確認並送出預約 💗</button>
   </div>
 
   <script>
@@ -166,11 +336,11 @@
       loadAvailableSlots();
     };
 
-    // 檢查 LocalStorage 記憶顧客資料
+    // 檢查 LocalStorage 記憶顧客資料（同裝置快速帶入用）
     function checkSavedCustomer() {
       const saved = localStorage.getItem('eyelash_customer');
       if (saved) {
-        document.getElementById('btnQuickFill').style.display = 'inline';
+        document.getElementById('btnQuickFill').style.display = 'inline-flex';
       }
     }
 
@@ -180,7 +350,40 @@
         document.getElementById('custName').value = saved.name || '';
         document.getElementById('custPhone').value = saved.phone || '';
         document.getElementById('custLine').value = saved.line || '';
+        checkReturningCustomer();
       }
+    }
+
+    // 依電話號碼查詢是否為回頭客（跨裝置有效，查詢 bookings 資料表）
+    async function checkReturningCustomer() {
+      const phone = document.getElementById('custPhone').value.trim();
+      const note = document.getElementById('historyNote');
+
+      if (!phone || phone.length < 8) {
+        note.style.display = 'none';
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('bookings')
+        .select('customer_name, line_id, booking_date')
+        .eq('customer_phone', phone)
+        .order('booking_date', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        note.style.display = 'none';
+        return;
+      }
+
+      // 若姓名 / LINE 欄位還是空的，自動帶入最近一次預約的資料
+      const nameInput = document.getElementById('custName');
+      const lineInput = document.getElementById('custLine');
+      const last = data[0];
+      if (!nameInput.value && last.customer_name) nameInput.value = last.customer_name;
+      if (!lineInput.value && last.line_id) lineInput.value = last.line_id;
+
+      note.style.display = 'block';
+      note.innerHTML = `💖 歡迎回來，${last.customer_name}！`;
     }
 
     // 載入款式與加購資料
@@ -193,24 +396,24 @@
 
       // 渲染款式單選按鈕
       const styleContainer = document.getElementById('styleOptions');
-      if (stylesData.length === 0) styleContainer.innerHTML = '<p>尚無可選款式</p>';
+      if (stylesData.length === 0) styleContainer.innerHTML = '<p class="empty-note">尚無可選款式</p>';
       else {
         styleContainer.innerHTML = stylesData.map(s => `
           <div class="option-item">
             <label><input type="radio" name="styleSelect" value="${s.id}" onchange="updateTotal()"> ${s.name}</label>
-            <span>NT$ ${s.price}</span>
+            <span class="price">NT$ ${s.price}</span>
           </div>
         `).join('');
       }
 
       // 渲染加購複選按鈕
       const addonContainer = document.getElementById('addonOptions');
-      if (addonsData.length === 0) addonContainer.innerHTML = '<p>無加購項目</p>';
+      if (addonsData.length === 0) addonContainer.innerHTML = '<p class="empty-note">無加購項目</p>';
       else {
         addonContainer.innerHTML = addonsData.map(a => `
           <div class="option-item">
             <label><input type="checkbox" class="addon-checkbox" value="${a.id}" onchange="updateTotal()"> ${a.name}</label>
-            <span>+ NT$ ${a.price}</span>
+            <span class="price">+ NT$ ${a.price}</span>
           </div>
         `).join('');
       }
@@ -287,7 +490,7 @@
 
       const total = document.getElementById('totalPrice').innerText;
 
-      // 儲存顧客資料至本地儲存區 (記憶功能)
+      // 儲存顧客資料至本地儲存區 (同裝置快速帶入)
       localStorage.setItem('eyelash_customer', JSON.stringify({ name, phone, line }));
 
       // 寫入 Supabase
