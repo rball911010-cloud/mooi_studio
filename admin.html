@@ -3,74 +3,394 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>美睫後台管理系統</title>
+  <title>美睫後台管理系統 - 月曆排程</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f4f6f9; color: #333; }
-    h2 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
-    .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background-color: #f8f9fa; }
-    input[type="text"], input[type="number"] { width: 90%; padding: 6px; }
-    .btn { padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .btn-danger { background: #dc3545; }
-    .btn-save { background: #007bff; }
+    :root {
+      --ink: #2A231E;
+      --ink-soft: #7A6C5D;
+      --bg: #F2ECE2;
+      --bg-alt: #EAE1D2;
+      --card: #FFFDFA;
+      --line: #E1D3BE;
+      --gold: #A17A3E;
+      --gold-deep: #8A6530;
+      --rose: #AD7B87;
+      --rose-deep: #8B5E6C;
+      --sage: #7C8F70;
+      --sage-tint: #EEF1E9;
+      --rust: #A85B4C;
+      --rust-tint: #F5E9E5;
+      --shadow: 0 10px 30px -16px rgba(42, 35, 30, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 32px 24px 60px;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 10% 0%, rgba(161,122,62,0.06), transparent 40%),
+        radial-gradient(circle at 95% 100%, rgba(173,123,135,0.07), transparent 45%);
+      color: var(--ink);
+      max-width: 920px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ---------- Header / brand mark ---------- */
+    .brand { text-align: center; margin-bottom: 30px; }
+    .lash-mark { width: 96px; height: 34px; margin: 0 auto 12px; display: block; }
+    .lash-mark path.stroke { fill: none; stroke: var(--gold); stroke-width: 1.6; stroke-linecap: round; }
+    .lash-mark path.fiber { fill: none; stroke: var(--rose); stroke-width: 1.3; stroke-linecap: round; opacity: 0.85; }
+    h2.title {
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: 0.05em;
+      margin: 0 0 6px;
+    }
+    .tagline { font-size: 13px; color: var(--ink-soft); margin: 0; }
+
+    h3.eyebrow {
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 600;
+      font-size: 17px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    h3.eyebrow .num {
+      font-size: 12px;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 999px;
+      width: 20px; height: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 600;
+    }
+
+    .section {
+      background: var(--card);
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    /* ---------- Date bar / actions ---------- */
+    .date-picker-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+    .date-picker-bar label { font-weight: 600; font-size: 13.5px; color: var(--ink-soft); }
+    .date-picker-bar input[type="date"] {
+      font-size: 15px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font-family: inherit;
+      background: #FFFEFC;
+      color: var(--ink);
+    }
+    .date-picker-bar input[type="date"]:focus {
+      outline: none; border-color: var(--rose);
+      box-shadow: 0 0 0 3px rgba(173,123,135,0.15);
+    }
+
+    .btn-group { display: flex; gap: 10px; margin-left: auto; }
+    .btn {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13.5px;
+      font-family: 'Noto Sans TC', sans-serif;
+      letter-spacing: 0.02em;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn { background: var(--gold); color: #FFF9F0; box-shadow: 0 6px 14px -6px rgba(138,101,48,0.5); }
+    .btn-secondary { background: var(--bg-alt); color: var(--ink-soft); box-shadow: none; }
+    .btn-danger { background: var(--rust); color: #FFF6F3; box-shadow: 0 6px 14px -6px rgba(168,91,76,0.4); }
+    .btn-save { background: var(--rose); color: #FFF6F8; box-shadow: 0 6px 14px -6px rgba(173,123,135,0.4); }
+
+    .hint {
+      font-size: 13px; color: var(--ink-soft);
+      background: var(--bg-alt);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+    .hint b { color: var(--gold-deep); }
+
+    /* ---------- Slot grid (admin) ---------- */
+    .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 6px; }
+    .slot-card {
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .16s ease;
+      user-select: none;
+      background: #FFFEFC;
+    }
+    .slot-card:hover { transform: translateY(-2px); }
+    .slot-card .time { font-family: 'Noto Serif TC', serif; font-weight: 700; font-size: 15.5px; }
+    .slot-card.available { border-color: var(--sage); background-color: var(--sage-tint); color: #4E5D45; }
+    .slot-card.off { border-color: var(--line); background-color: var(--bg-alt); color: var(--ink-soft); }
+    .slot-card.booked { border-color: var(--rust); background-color: var(--rust-tint); color: #7A3B2F; cursor: default; }
+    .slot-card.booked:hover { transform: none; }
+    .slot-card .status-label { font-size: 11.5px; margin-top: 5px; font-weight: 700; letter-spacing: 0.02em; }
+    .slot-card .cust-label {
+      font-size: 12.5px; margin-top: 8px; background: rgba(255,255,255,0.75);
+      padding: 4px 6px; border-radius: 6px; word-break: break-all;
+    }
+    .slot-card .toggle-tip { font-size: 10.5px; margin-top: 5px; opacity: 0.75; }
+
+    /* ---------- Tables ---------- */
+    table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 12px 10px; text-align: left; vertical-align: middle; }
+    th {
+      background: transparent;
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--ink-soft);
+      letter-spacing: 0.03em;
+    }
+    tbody tr:hover { background: rgba(161,122,62,0.05); }
+    td b { font-family: 'Noto Serif TC', serif; }
+
+    input[type="text"], input[type="number"] {
+      width: 90%;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #FFFEFC;
+      color: var(--ink);
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      outline: none; border-color: var(--rose);
+      box-shadow: 0 0 0 3px rgba(173,123,135,0.15);
+    }
+
+    .table-actions { display: flex; gap: 8px; }
+    .empty-note { color: var(--ink-soft); text-align: center; padding: 14px; }
+
+    .add-row-btn { margin-top: 14px; }
   </style>
 </head>
 <body>
 
-  <h2>⚙️ 美睫預約後台管理系統</h2>
+  <div class="brand">
+    <svg class="lash-mark" viewBox="0 0 120 40" aria-hidden="true">
+      <path class="stroke" d="M6 32 Q45 6 114 12" />
+      <path class="fiber" d="M24 26 L20 14" />
+      <path class="fiber" d="M42 18 L40 6" />
+      <path class="fiber" d="M62 14 L62 3" />
+      <path class="fiber" d="M82 12 L85 2" />
+      <path class="fiber" d="M100 12 L105 3" />
+    </svg>
+    <h2 class="title">美睫後台管理系統</h2>
+    <p class="tagline">排程・款式・預約，一頁掌握</p>
+  </div>
 
-  <!-- 1. 款式項目維護 (Excel風格編輯) -->
+  <!-- 1. 月曆排程管理 (可開關時段、查看已滿) -->
   <div class="section">
-    <h3>1. 款式項目管理 (可直接在表格內修改編輯)</h3>
+    <h3 class="eyebrow"><span class="num">1</span> 日期與時段排程管理</h3>
+    <div class="date-picker-bar">
+      <label>選擇管理日期：</label>
+      <input type="date" id="adminDate" onchange="loadScheduleAndBookings()">
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="toggleAllSlots(false)">一鍵全天公休</button>
+        <button class="btn" onclick="toggleAllSlots(true)">一鍵開放全天</button>
+      </div>
+    </div>
+
+    <div class="hint">
+      💡 提示：點擊狀態為 <b>「可預約」</b> 或 <b>「公休」</b> 的時段可自由切換狀態；已被顧客預約的時段為 <b>「已客滿」</b>。
+    </div>
+
+    <div class="slot-grid" id="adminSlotsContainer">
+      <p class="empty-note" style="grid-column: 1/-1;">載入排程中...</p>
+    </div>
+  </div>
+
+  <!-- 2. 款式項目維護 -->
+  <div class="section">
+    <h3 class="eyebrow"><span class="num">2</span> 款式項目管理</h3>
     <table id="stylesTable">
       <thead>
         <tr><th>款式名稱</th><th>價格 (NT$)</th><th>操作</th></tr>
       </thead>
       <tbody><!-- 動態載入 --></tbody>
     </table>
-    <br>
-    <button class="btn" onclick="addStyleRow()">+ 新增款式列</button>
+    <button class="btn add-row-btn" onclick="addStyleRow()">+ 新增款式列</button>
   </div>
 
-  <!-- 2. 加購項目維護 -->
+  <!-- 3. 加購項目維護 -->
   <div class="section">
-    <h3>2. 加購項目管理</h3>
+    <h3 class="eyebrow"><span class="num">3</span> 加購項目管理</h3>
     <table id="addonsTable">
       <thead>
         <tr><th>加購名稱</th><th>價格 (NT$)</th><th>操作</th></tr>
       </thead>
       <tbody><!-- 動態載入 --></tbody>
     </table>
-    <br>
-    <button class="btn" onclick="addAddonRow()">+ 新增加購列</button>
+    <button class="btn add-row-btn" onclick="addAddonRow()">+ 新增加購列</button>
   </div>
 
-  <!-- 3. 預約紀錄清單 -->
+  <!-- 4. 當日預約清單 -->
   <div class="section">
-    <h3>3. 所有預約紀錄</h3>
+    <h3 class="eyebrow"><span class="num">4</span> 當日預約細節清單</h3>
     <table id="bookingsTable">
       <thead>
-        <tr><th>預約日期</th><th>時段</th><th>顧客姓名</th><th>電話</th><th>款式</th><th>總金額</th><th>狀態</th></tr>
+        <tr><th>時段</th><th>顧客姓名</th><th>電話</th><th>LINE ID</th><th>款式</th><th>總金額</th><th>操作</th></tr>
       </thead>
       <tbody><!-- 動態載入 --></tbody>
     </table>
   </div>
 
   <script>
+    // 🔗 Supabase 正確設定 (不帶末尾斜線或 /rest/v1)
     const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE'; // 👈 請確認貼上完整的 anon key
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 預設常見時段
+    const DEFAULT_SLOTS = ['10:00', '13:00', '15:30', '18:00', '20:00'];
+
     window.onload = () => {
+      // 預設日期為今天
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('adminDate').value = today;
+
+      loadScheduleAndBookings();
       loadStyles();
       loadAddons();
-      loadBookings();
     };
 
-    // --- 款式管理 ---
+    // --- 1. 月曆排程管理邏輯 ---
+    async function loadScheduleAndBookings() {
+      const date = document.getElementById('adminDate').value;
+      if (!date) return;
+
+      const container = document.getElementById('adminSlotsContainer');
+      container.innerHTML = '載入中...';
+
+      // 讀取該日期排程與預約單
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').eq('booking_date', date);
+
+      container.innerHTML = DEFAULT_SLOTS.map(time => {
+        const schedule = dbSchedules?.find(s => s.time_slot === time);
+        const booking = dbBookings?.find(b => b.booking_time === time);
+
+        // 是否公休（預設 true 可預約，除非資料庫特別標註 false）
+        const isAvailable = schedule ? schedule.is_available : true;
+        const isBooked = !!booking;
+
+        if (isBooked) {
+          return `
+            <div class="slot-card booked">
+              <div class="time">${time}</div>
+              <div class="status-label">🔴 已客滿</div>
+              <div class="cust-label">👤 ${booking.customer_name} (${booking.customer_phone})</div>
+            </div>
+          `;
+        } else if (isAvailable) {
+          return `
+            <div class="slot-card available" onclick="toggleSlotStatus('${date}', '${time}', false)">
+              <div class="time">${time}</div>
+              <div class="status-label">🟢 可預約</div>
+              <div class="toggle-tip">點擊切換公休</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="slot-card off" onclick="toggleSlotStatus('${date}', '${time}', true)">
+              <div class="time">${time}</div>
+              <div class="status-label">⚪ 公休/不開放</div>
+              <div class="toggle-tip">點擊開放預約</div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      renderBookingsTable(dbBookings || []);
+    }
+
+    // 切換個別時段開關狀態
+    async function toggleSlotStatus(date, timeSlot, targetStatus) {
+      const { error } = await supabaseClient
+        .from('schedules')
+        .upsert({ date, time_slot: timeSlot, is_available: targetStatus }, { onConflict: 'date, time_slot' });
+
+      if (error) alert('更新狀態失敗：' + error.message);
+      else loadScheduleAndBookings();
+    }
+
+    // 一鍵設定全天公休或開放
+    async function toggleAllSlots(targetStatus) {
+      const date = document.getElementById('adminDate').value;
+      if (!date) return;
+
+      const upsertData = DEFAULT_SLOTS.map(time => ({
+        date,
+        time_slot: time,
+        is_available: targetStatus
+      }));
+
+      const { error } = await supabaseClient
+        .from('schedules')
+        .upsert(upsertData, { onConflict: 'date, time_slot' });
+
+      if (error) alert('批次更新失敗：' + error.message);
+      else loadScheduleAndBookings();
+    }
+
+    // 渲染當天預約表格
+    function renderBookingsTable(bookings) {
+      const tbody = document.querySelector('#bookingsTable tbody');
+      if (bookings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-note">當日尚無預約紀錄</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = bookings.map(b => `
+        <tr>
+          <td><b>${b.booking_time}</b></td>
+          <td>${b.customer_name}</td>
+          <td>${b.customer_phone}</td>
+          <td>${b.line_id || '-'}</td>
+          <td>${b.style_name}</td>
+          <td>NT$ ${b.total_price}</td>
+          <td><button class="btn btn-danger" onclick="cancelBooking('${b.id}')">取消預約</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function cancelBooking(id) {
+      if (confirm('確定要取消此筆預約嗎？')) {
+        await supabaseClient.from('bookings').delete().eq('id', id);
+        loadScheduleAndBookings();
+      }
+    }
+
+    // --- 2. 款式管理邏輯 ---
     async function loadStyles() {
       const { data } = await supabaseClient.from('eyelash_styles').select('*').order('created_at');
       const tbody = document.querySelector('#stylesTable tbody');
@@ -78,7 +398,7 @@
         <tr>
           <td><input type="text" value="${s.name}" id="style-name-${s.id}"></td>
           <td><input type="number" value="${s.price}" id="style-price-${s.id}"></td>
-          <td>
+          <td class="table-actions">
             <button class="btn btn-save" onclick="saveStyle('${s.id}')">儲存</button>
             <button class="btn btn-danger" onclick="deleteStyle('${s.id}')">刪除</button>
           </td>
@@ -94,7 +414,7 @@
     }
 
     async function deleteStyle(id) {
-      if(confirm('確定要刪除嗎？')) {
+      if (confirm('確定要刪除嗎？')) {
         await supabaseClient.from('eyelash_styles').delete().eq('id', id);
         loadStyles();
       }
@@ -109,7 +429,7 @@
       }
     }
 
-    // --- 加購管理 ---
+    // --- 3. 加購管理邏輯 ---
     async function loadAddons() {
       const { data } = await supabaseClient.from('add_ons').select('*').order('created_at');
       const tbody = document.querySelector('#addonsTable tbody');
@@ -117,7 +437,7 @@
         <tr>
           <td><input type="text" value="${a.name}" id="addon-name-${a.id}"></td>
           <td><input type="number" value="${a.price}" id="addon-price-${a.id}"></td>
-          <td>
+          <td class="table-actions">
             <button class="btn btn-save" onclick="saveAddon('${a.id}')">儲存</button>
             <button class="btn btn-danger" onclick="deleteAddon('${a.id}')">刪除</button>
           </td>
@@ -133,7 +453,7 @@
     }
 
     async function deleteAddon(id) {
-      if(confirm('確定要刪除嗎？')) {
+      if (confirm('確定要刪除嗎？')) {
         await supabaseClient.from('add_ons').delete().eq('id', id);
         loadAddons();
       }
@@ -146,23 +466,6 @@
         await supabaseClient.from('add_ons').insert([{ name, price: Number(price) }]);
         loadAddons();
       }
-    }
-
-    // --- 預約紀錄檢視 ---
-    async function loadBookings() {
-      const { data } = await supabaseClient.from('bookings').select('*').order('booking_date', { ascending: false });
-      const tbody = document.querySelector('#bookingsTable tbody');
-      tbody.innerHTML = (data || []).map(b => `
-        <tr>
-          <td>${b.booking_date}</td>
-          <td>${b.booking_time}</td>
-          <td>${b.customer_name}</td>
-          <td>${b.customer_phone}</td>
-          <td>${b.style_name}</td>
-          <td>NT$ ${b.total_price}</td>
-          <td>${b.status}</td>
-        </tr>
-      `).join('');
     }
   </script>
 </body>
