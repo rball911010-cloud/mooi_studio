@@ -434,6 +434,9 @@
       <span class="total-value"><span class="currency">NT$</span><span id="totalPrice">0</span></span>
     </div>
     <button class="btn-submit" onclick="submitBooking()">確認並送出預約 🌸</button>
+    <div style="text-align: center; margin-top: 14px;">
+      <span class="history-link" onclick="openHistoryFromButton()">📖 查看我的預約紀錄</span>
+    </div>
   </div>
 
   <!-- 5. 預約成功彈窗 -->
@@ -735,6 +738,21 @@
 
     // ---------- 我的預約紀錄（含修改／取消） ----------
     let historyBookingsCache = {};
+
+    // 從「總計與送出」下方的固定連結打開，不用等系統自動偵測回頭客
+    function openHistoryFromButton() {
+      const phoneInput = document.getElementById('custPhone');
+      let phone = phoneInput.value.trim();
+
+      if (!phone) {
+        phone = prompt('請輸入你預約時填寫的手機號碼：') || '';
+        phone = phone.trim();
+        if (!phone) return;
+        phoneInput.value = phone;
+      }
+
+      showBookingHistory();
+    }
 
     async function showBookingHistory() {
       const phone = document.getElementById('custPhone').value.trim();
