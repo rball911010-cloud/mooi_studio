@@ -337,6 +337,22 @@
     .history-item:last-child { border-bottom: none; }
     .history-item .h-date { font-weight: 700; font-size: 14px; color: var(--ink); }
     .history-item .h-detail { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
+
+    .h-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-mini {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: var(--bg-alt);
+      color: var(--accent-deep);
+      transition: transform .15s ease;
+    }
+    .btn-mini:hover { transform: scale(1.05); }
+    .btn-mini-danger { background: var(--coral-tint); color: #B04A3F; }
+    .h-locked { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -420,7 +436,7 @@
     <button class="btn-submit" onclick="submitBooking()">確認並送出預約 🌸</button>
   </div>
 
-  <!-- 5. 預約成功彈窗（預設隱藏，送出成功才顯示，浮在畫面正中間不受捲動位置影響） -->
+  <!-- 5. 預約成功彈窗 -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal-inner">
       <h3 class="eyebrow">🎉 預約成功</h3>
@@ -433,12 +449,57 @@
     </div>
   </div>
 
-  <!-- 6. 預約紀錄彈窗（依電話號碼查詢，不顯示金額） -->
+  <!-- 6. 預約紀錄彈窗（依電話號碼查詢，含修改／取消） -->
   <div class="modal-overlay" id="historyModal">
     <div class="modal-inner">
       <button class="modal-close" onclick="closeHistoryModal()">✕</button>
       <h3 class="eyebrow">📖 我的預約紀錄</h3>
       <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- 7. 修改預約彈窗 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-inner">
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <h3 class="eyebrow">✏️ 修改預約</h3>
+
+      <label>選擇日期 *</label>
+      <div class="calendar-nav">
+        <button type="button" class="btn-nav" onclick="changeEditCalMonth(-1)">‹</button>
+        <span class="month-label" id="editCalMonthLabel">載入中...</span>
+        <button type="button" class="btn-nav" onclick="changeEditCalMonth(1)">›</button>
+      </div>
+      <div class="calendar-grid">
+        <div class="calendar-weekday">日</div>
+        <div class="calendar-weekday">一</div>
+        <div class="calendar-weekday">二</div>
+        <div class="calendar-weekday">三</div>
+        <div class="calendar-weekday">四</div>
+        <div class="calendar-weekday">五</div>
+        <div class="calendar-weekday">六</div>
+      </div>
+      <div class="calendar-grid" id="editCalendarGrid" style="margin-top: 5px;">
+        <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
+      </div>
+
+      <label style="margin-top:16px; display:block;">可預約時段 *</label>
+      <div class="slot-grid" id="editSlotsContainer">
+        <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
+      </div>
+
+      <label style="margin-top:16px; display:block;">美睫款式 *</label>
+      <div id="editStyleOptions">載入中...</div>
+
+      <label style="margin-top:16px; display:block;">加購項目（複選）</label>
+      <div id="editAddonOptions">載入中...</div>
+
+      <div class="total-row" style="margin-top:18px;">
+        <span class="total-label">預計金額</span>
+        <span class="total-value"><span class="currency">NT$</span><span id="editTotalPrice">0</span></span>
+      </div>
+
+      <button class="btn-submit" onclick="saveEditBooking()">儲存修改</button>
     </div>
   </div>
 
@@ -460,6 +521,9 @@
     // 預設常見時段（月曆總覽與時段清單共用）
     const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
+    // 👉 預約時間前幾小時內，不讓客人自己修改／取消（要打電話聯繫）
+    const MODIFY_CUTOFF_HOURS = 24;
+
     // ---------- LINE 好友身份 (LIFF) ----------
     const LIFF_ID = 'Y2011072988-Nzr1UAfi';
     let lineProfile = null; // { userId, displayName, pictureUrl }
@@ -471,30 +535,23 @@
     // 部署好的 send-line-confirmation Edge Function 網址
     const LINE_PUSH_FUNCTION_URL = 'https://tlnodsjkpvupuxlbkuoy.functions.supabase.co/send-line-confirmation';
 
-    // 👉 你（店家管理員）自己的 LINE userId。填了之後，不管客人從 LINE、IG 還是哪裡進來，
-    //    只要預約成功，都會自動推播一則訊息通知你，不需要客人本人有登入 LINE。
-    //    取得方式：用手機在 LINE 裡打開這個頁面網址加上 ?debug=1 一次，
-    //    畫面會跳出一個框顯示你的 userId，複製後貼進這裡，再把這行的預留字換掉。
+    // 👉 你（店家管理員）自己的 LINE userId
     const ADMIN_LINE_USER_ID = 'YOUR-ADMIN-LINE-USER-ID';
 
     async function initLiff() {
-      if (!LIFF_ID || LIFF_ID === 'YOUR-LIFF-ID') return; // 尚未設定 LIFF，略過
+      if (!LIFF_ID || LIFF_ID === 'YOUR-LIFF-ID') return;
       try {
         await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
           lineProfile = await liff.getProfile();
-          // 姓名欄位若還是空的，用 LINE 暱稱幫忙帶入（顧客仍可自行修改）
           const nameInput = document.getElementById('custName');
           if (nameInput && !nameInput.value && lineProfile.displayName) {
             nameInput.value = lineProfile.displayName;
           }
-          // 🔧 一次性除錯用：網址加上 ?debug=1，用 LINE 打開頁面時會跳出你的 userId，
-          //    複製後貼進上面的 ADMIN_LINE_USER_ID，測完記得把 ?debug=1 從正式連結拿掉。
           if (new URLSearchParams(window.location.search).get('debug') === '1') {
             alert('你的 LINE userId：\n' + lineProfile.userId);
           }
         } else if (liff.isInClient()) {
-          // 在 LINE App 內開啟但尚未登入，導向登入
           liff.login();
         }
       } catch (e) {
@@ -525,7 +582,6 @@
       checkSavedCustomer();
       await fetchStylesAndAddons();
 
-      // 預設日期為明天
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       calYear = tomorrow.getFullYear();
@@ -537,6 +593,17 @@
 
     function pad2(n) { return String(n).padStart(2, '0'); }
 
+    // ---------- 修改/取消預約的時間限制小工具 ----------
+    function toDateTime(dateStr, timeStr) {
+      const [h, m] = timeStr.split(':');
+      return new Date(`${dateStr}T${h.padStart(2, '0')}:${(m || '0').padStart(2, '0')}:00`);
+    }
+
+    function canModify(dateStr, timeStr) {
+      const bookingDT = toDateTime(dateStr, timeStr);
+      return (bookingDT.getTime() - Date.now()) >= MODIFY_CUTOFF_HOURS * 60 * 60 * 1000;
+    }
+
     // 切換月曆顯示的月份
     function changeCalMonth(delta) {
       calMonth += delta;
@@ -545,7 +612,7 @@
       loadMonthCalendar();
     }
 
-    // 載入整月的日期總覽，讓顧客一眼看出哪幾天還有空、哪幾天已滿或公休
+    // 載入整月的日期總覽
     async function loadMonthCalendar() {
       const grid = document.getElementById('calendarGrid');
       grid.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">載入中...</p>';
@@ -599,7 +666,6 @@
         if (dateStr === selectedDate) extraClass += ' selected';
         if (isPast) extraClass += ' cal-past';
 
-        // 只有「可預約」且非過去的日期才能點擊
         const clickable = statusClass === 'cal-open' && !isPast;
         const clickHandler = clickable ? `onclick="selectCalendarDay('${dateStr}')"` : '';
 
@@ -614,14 +680,12 @@
       grid.innerHTML = cells;
     }
 
-    // 點選月曆上的日期：帶入日期並載入該天的可預約時段
     async function selectCalendarDay(dateStr) {
       document.getElementById('bookingDate').value = dateStr;
       await loadMonthCalendar();
       loadAvailableSlots();
     }
 
-    // 檢查 LocalStorage 記憶顧客資料（同裝置快速帶入用）
     function checkSavedCustomer() {
       const saved = localStorage.getItem('eyelash_customer');
       if (saved) {
@@ -639,7 +703,6 @@
       }
     }
 
-    // 依電話號碼查詢是否為回頭客（跨裝置有效，查詢 bookings 資料表）
     async function checkReturningCustomer() {
       const phone = document.getElementById('custPhone').value.trim();
       const note = document.getElementById('historyNote');
@@ -660,7 +723,6 @@
         return;
       }
 
-      // 若姓名 / LINE 欄位還是空的，自動帶入最近一次預約的資料
       const nameInput = document.getElementById('custName');
       const lineInput = document.getElementById('custLine');
       const last = data[0];
@@ -671,7 +733,9 @@
       note.innerHTML = `🌼 歡迎回來，${last.customer_name}！ <span class="history-link" onclick="showBookingHistory()">查看我的預約紀錄</span>`;
     }
 
-    // 查看該電話號碼的所有預約紀錄（不顯示金額，因為價格會調整）
+    // ---------- 我的預約紀錄（含修改／取消） ----------
+    let historyBookingsCache = {};
+
     async function showBookingHistory() {
       const phone = document.getElementById('custPhone').value.trim();
       if (!phone) return;
@@ -682,7 +746,7 @@
 
       const { data, error } = await supabaseClient
         .from('bookings')
-        .select('booking_date, booking_time, style_name, add_ons')
+        .select('id, booking_date, booking_time, style_id, style_name, add_ons')
         .eq('customer_phone', phone)
         .order('booking_date', { ascending: false });
 
@@ -691,12 +755,22 @@
         return;
       }
 
+      historyBookingsCache = {};
+      data.forEach(b => { historyBookingsCache[b.id] = b; });
+
       listEl.innerHTML = data.map(b => {
         const addonNames = (b.add_ons || []).map(a => a.name).join('、') || '無';
+        const editable = canModify(b.booking_date, b.booking_time);
         return `
           <div class="history-item">
             <div class="h-date">${b.booking_date} ${b.booking_time}</div>
             <div class="h-detail">款式：${b.style_name}　加購：${addonNames}</div>
+            ${editable
+              ? `<div class="h-actions">
+                   <button class="btn-mini" onclick="openEditModal('${b.id}')">✏️ 修改</button>
+                   <button class="btn-mini btn-mini-danger" onclick="cancelBookingByCustomer('${b.id}')">🗑 取消</button>
+                 </div>`
+              : `<div class="h-locked">⏰ 已太接近預約時間，如需異動請直接聯繫我們</div>`}
           </div>
         `;
       }).join('');
@@ -704,6 +778,247 @@
 
     function closeHistoryModal() {
       document.getElementById('historyModal').style.display = 'none';
+    }
+
+    async function cancelBookingByCustomer(id) {
+      const b = historyBookingsCache[id];
+      if (b && !canModify(b.booking_date, b.booking_time)) {
+        alert('已太接近預約時間，無法自行取消，請直接聯繫我們。');
+        return;
+      }
+      if (!confirm('確定要取消這筆預約嗎？')) return;
+
+      const { error } = await supabaseClient.from('bookings').delete().eq('id', id);
+      if (error) { alert('取消失敗：' + error.message); return; }
+
+      alert('已取消預約');
+      showBookingHistory();
+      loadMonthCalendar();
+      if (document.getElementById('bookingDate').value) loadAvailableSlots();
+    }
+
+    // ---------- 修改預約彈窗 ----------
+    let editingBookingId = null;
+    let editCalYear, editCalMonth;
+    let editSelectedDate = '';
+    let editSelectedTime = '';
+    let editSelectedStyle = null;
+    let editSelectedAddons = [];
+
+    function openEditModal(id) {
+      const b = historyBookingsCache[id];
+      if (!b) return;
+      if (!canModify(b.booking_date, b.booking_time)) {
+        alert('已太接近預約時間，無法自行修改，請直接聯繫我們。');
+        return;
+      }
+
+      editingBookingId = id;
+      editSelectedDate = b.booking_date;
+      editSelectedTime = b.booking_time;
+      editSelectedStyle = stylesData.find(s => s.id === b.style_id) || null;
+      editSelectedAddons = (b.add_ons || [])
+        .map(a => addonsData.find(x => x.id === a.id))
+        .filter(Boolean);
+
+      const d = new Date(b.booking_date);
+      editCalYear = d.getFullYear();
+      editCalMonth = d.getMonth();
+
+      renderEditStyleOptions();
+      renderEditAddonOptions();
+      updateEditTotal();
+      loadEditMonthCalendar();
+      loadEditAvailableSlots();
+
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function renderEditStyleOptions() {
+      const c = document.getElementById('editStyleOptions');
+      if (stylesData.length === 0) { c.innerHTML = '<p class="empty-note">尚無可選款式</p>'; return; }
+      c.innerHTML = stylesData.map(s => `
+        <div class="option-item">
+          <label><input type="radio" name="editStyleSelect" value="${s.id}" ${editSelectedStyle && editSelectedStyle.id === s.id ? 'checked' : ''} onchange="updateEditTotal()"> ${s.name}</label>
+          <span class="price">NT$ ${s.price}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderEditAddonOptions() {
+      const c = document.getElementById('editAddonOptions');
+      if (addonsData.length === 0) { c.innerHTML = '<p class="empty-note">無加購項目</p>'; return; }
+      const selectedIds = editSelectedAddons.map(a => a.id);
+      c.innerHTML = addonsData.map(a => `
+        <div class="option-item">
+          <label><input type="checkbox" class="edit-addon-checkbox" value="${a.id}" ${selectedIds.includes(a.id) ? 'checked' : ''} onchange="updateEditTotal()"> ${a.name}</label>
+          <span class="price">+ NT$ ${a.price}</span>
+        </div>
+      `).join('');
+    }
+
+    function updateEditTotal() {
+      let total = 0;
+      const styleId = document.querySelector('input[name="editStyleSelect"]:checked')?.value;
+      editSelectedStyle = stylesData.find(s => s.id === styleId) || null;
+      if (editSelectedStyle) total += Number(editSelectedStyle.price);
+
+      editSelectedAddons = [];
+      document.querySelectorAll('.edit-addon-checkbox:checked').forEach(cb => {
+        const addon = addonsData.find(a => a.id === cb.value);
+        if (addon) { editSelectedAddons.push(addon); total += Number(addon.price); }
+      });
+
+      document.getElementById('editTotalPrice').innerText = total;
+    }
+
+    function changeEditCalMonth(delta) {
+      editCalMonth += delta;
+      if (editCalMonth < 0) { editCalMonth = 11; editCalYear--; }
+      if (editCalMonth > 11) { editCalMonth = 0; editCalYear++; }
+      loadEditMonthCalendar();
+    }
+
+    async function loadEditMonthCalendar() {
+      const grid = document.getElementById('editCalendarGrid');
+      grid.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">載入中...</p>';
+
+      const monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      document.getElementById('editCalMonthLabel').textContent = `${editCalYear} 年 ${monthNames[editCalMonth]}`;
+
+      const daysInMonth = new Date(editCalYear, editCalMonth + 1, 0).getDate();
+      const startWeekday = new Date(editCalYear, editCalMonth, 1).getDay();
+      const startStr = `${editCalYear}-${pad2(editCalMonth + 1)}-01`;
+      const endStr = `${editCalYear}-${pad2(editCalMonth + 1)}-${pad2(daysInMonth)}`;
+
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr).neq('id', editingBookingId);
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const originalDateStr = editingBookingId ? (historyBookingsCache[editingBookingId]?.booking_date || '') : '';
+
+      let cells = '';
+      for (let i = 0; i < startWeekday; i++) cells += `<div class="calendar-day empty"></div>`;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${editCalYear}-${pad2(editCalMonth + 1)}-${pad2(day)}`;
+        const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
+        const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
+        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        const openTimes = DEFAULT_SLOTS.filter(t => {
+          const sch = daySchedules.find(s => s.time_slot === t);
+          return sch && sch.is_available === true;
+        });
+        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+
+        // 原本這筆預約的日期，即使顯示公休/已滿，仍然可以點回去（因為那個名額本來就是他自己的）
+        const isOriginalDate = dateStr === originalDateStr;
+
+        let statusClass, statusLabel;
+        if ((openTimes.length === 0) && !isOriginalDate) {
+          statusClass = 'cal-off';
+          statusLabel = '已無可預約時間';
+        } else if ((remainingTimes.length === 0) && !isOriginalDate) {
+          statusClass = 'cal-full';
+          statusLabel = '已無可預約時間';
+        } else {
+          statusClass = 'cal-open';
+          statusLabel = '可預約';
+        }
+
+        const isPast = dateStr < todayStr;
+        let extraClass = '';
+        if (dateStr === todayStr) extraClass += ' today';
+        if (dateStr === editSelectedDate) extraClass += ' selected';
+        if (isPast && !isOriginalDate) extraClass += ' cal-past';
+
+        const clickable = (statusClass === 'cal-open') && (!isPast || isOriginalDate);
+        const clickHandler = clickable ? `onclick="selectEditCalendarDay('${dateStr}')"` : '';
+
+        cells += `
+          <div class="calendar-day ${statusClass}${extraClass}" ${clickHandler}>
+            <div class="day-num">${day}</div>
+            <div class="day-status">${statusLabel}</div>
+          </div>
+        `;
+      }
+
+      grid.innerHTML = cells;
+    }
+
+    async function selectEditCalendarDay(dateStr) {
+      editSelectedDate = dateStr;
+      // 換了日期，原本的時段不一定還適用，讓客人在新日期重新挑選
+      const originalBooking = historyBookingsCache[editingBookingId];
+      editSelectedTime = (originalBooking && originalBooking.booking_date === dateStr) ? originalBooking.booking_time : '';
+      await loadEditMonthCalendar();
+      loadEditAvailableSlots();
+    }
+
+    async function loadEditAvailableSlots() {
+      const date = editSelectedDate;
+      if (!date) return;
+
+      const container = document.getElementById('editSlotsContainer');
+      container.innerHTML = '載入中...';
+
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('id, booking_time').eq('booking_date', date).neq('id', editingBookingId);
+
+      const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
+
+      const openSlots = DEFAULT_SLOTS.filter(time => {
+        const schedule = dbSchedules?.find(s => s.time_slot === time);
+        const isOff = !(schedule && schedule.is_available === true);
+        const isBooked = bookedSlots.includes(time);
+        const isOriginalSlot = time === editSelectedTime;
+        return (!isOff && !isBooked) || isOriginalSlot;
+      });
+
+      if (openSlots.length === 0) {
+        container.innerHTML = '<p class="empty-note" style="grid-column: 1/-1;">這天目前沒有可預約的時段</p>';
+        return;
+      }
+
+      container.innerHTML = openSlots.map(time => {
+        const sel = time === editSelectedTime ? 'selected' : '';
+        return `<div class="slot-btn ${sel}" onclick="selectEditSlot(this, '${time}')">${time}</div>`;
+      }).join('');
+    }
+
+    function selectEditSlot(btn, time) {
+      document.querySelectorAll('#editSlotsContainer .slot-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      editSelectedTime = time;
+    }
+
+    async function saveEditBooking() {
+      if (!editSelectedDate || !editSelectedTime) { alert('請選擇日期與時段！'); return; }
+      if (!editSelectedStyle) { alert('請選擇美睫款式！'); return; }
+
+      const total = document.getElementById('editTotalPrice').innerText;
+
+      const { error } = await supabaseClient.from('bookings').update({
+        booking_date: editSelectedDate,
+        booking_time: editSelectedTime,
+        style_id: editSelectedStyle.id,
+        style_name: editSelectedStyle.name,
+        add_ons: editSelectedAddons,
+        total_price: Number(total)
+      }).eq('id', editingBookingId);
+
+      if (error) { alert('修改失敗：' + error.message); return; }
+
+      alert('✅ 預約已更新！');
+      closeEditModal();
+      showBookingHistory();
+      loadMonthCalendar();
+      if (document.getElementById('bookingDate').value) loadAvailableSlots();
     }
 
     // 載入款式與加購資料
@@ -844,7 +1159,6 @@
         document.getElementById('formCard4').style.display = 'none';
         document.getElementById('confirmModal').style.display = 'flex';
 
-        // 通知你（管理員）：只要預約成功就推播，不管客人是從哪個管道進來、有沒有登入 LINE
         if (ADMIN_LINE_USER_ID && ADMIN_LINE_USER_ID !== 'YOUR-ADMIN-LINE-USER-ID' && LINE_PUSH_FUNCTION_URL) {
           fetch(LINE_PUSH_FUNCTION_URL, {
             method: 'POST',
@@ -856,7 +1170,6 @@
           }).catch(e => console.warn('通知管理員失敗：', e));
         }
 
-        // 如果客人是從 LINE 進來、且已透過 LIFF 抓到身份，額外自動推播預約成功訊息給客人本人
         if (lineProfile && lineProfile.userId && LINE_PUSH_FUNCTION_URL) {
           fetch(LINE_PUSH_FUNCTION_URL, {
             method: 'POST',
@@ -867,7 +1180,7 @@
       }
     }
 
-    // 一鍵把預約摘要傳到 LINE（打開 LINE 對話並帶入文字，客人按送出即可，完全免費）
+    // 一鍵把預約摘要傳到 LINE
     function sendToLine() {
       if (!LINE_OA_ID || LINE_OA_ID === 'YOUR-LINE-OA-ID') {
         alert('店家尚未設定 LINE 官方帳號，請改用下方「複製預約摘要」傳送給我們。');
@@ -877,7 +1190,7 @@
       window.open(url, '_blank');
     }
 
-    // 複製預約摘要，讓客人可以貼到 LINE、IG 私訊、簡訊等任何管道（通用備案）
+    // 複製預約摘要
     async function copySummary() {
       try {
         await navigator.clipboard.writeText(lastBookingSummary);
