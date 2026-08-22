@@ -23,6 +23,8 @@
       --mint-tint: #E7F8F1;
       --coral: #FF8177;
       --coral-tint: #FFEEEA;
+      --buffer: #E8A33D;
+      --buffer-tint: #FFF3DD;
       --shadow: 0 14px 28px -18px rgba(198, 133, 46, 0.38);
     }
 
@@ -102,7 +104,7 @@
       box-shadow: 0 0 0 4px rgba(224,164,88,0.18);
     }
 
-    .btn-group { display: flex; gap: 10px; margin-left: auto; }
+    .btn-group { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
     .btn {
       padding: 10px 18px;
       border: none;
@@ -147,6 +149,8 @@
     .slot-card.off { border-color: var(--line); background-color: var(--bg-alt); color: var(--ink-soft); }
     .slot-card.booked { border-color: var(--coral); background-color: var(--coral-tint); color: #B04A3F; cursor: default; }
     .slot-card.booked:hover { transform: none; }
+    .slot-card.buffer { border-color: var(--buffer); background-color: var(--buffer-tint); color: #9C6A1E; cursor: default; }
+    .slot-card.buffer:hover { transform: none; }
     .slot-card .status-label { font-size: 11.5px; margin-top: 5px; font-weight: 700; letter-spacing: 0.02em; }
     .slot-card .cust-label {
       font-size: 12.5px; margin-top: 8px; background: rgba(255,255,255,0.8);
@@ -168,7 +172,7 @@
     tr.new-row td { background: var(--bg-alt); }
     td b { font-family: 'Baloo 2', sans-serif; }
 
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], input[type="tel"] {
       width: 90%;
       padding: 8px 10px;
       border: 2px solid var(--line);
@@ -178,7 +182,7 @@
       background: #FFFCFB;
       color: var(--ink);
     }
-    input[type="text"]:focus, input[type="number"]:focus {
+    input[type="text"]:focus, input[type="number"]:focus, input[type="tel"]:focus {
       outline: none; border-color: var(--accent);
       box-shadow: 0 0 0 4px rgba(224,164,88,0.18);
     }
@@ -217,13 +221,89 @@
     .calendar-day .day-status { font-size: 10px; margin-top: auto; font-weight: 700; line-height: 1.3; }
     .calendar-day.today { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(224,164,88,0.25); }
     .calendar-day.selected { background: var(--bg-alt); border-color: var(--accent-deep); }
-    .calendar-day.cal-off { background: var(--bg-alt); }
-    .calendar-day.cal-off .day-status { color: var(--ink-soft); }
-    .calendar-day.cal-full { background: var(--coral-tint); border-color: var(--coral); }
-    .calendar-day.cal-full .day-status { color: #B04A3F; }
+    .calendar-day.cal-unavailable { background: var(--coral-tint); border-color: var(--coral); }
+    .calendar-day.cal-unavailable .day-status { color: #B04A3F; }
     .calendar-day.cal-open { background: var(--mint-tint); border-color: var(--mint); }
     .calendar-day.cal-open .day-status { color: #3E7A66; }
     .calendar-day.cal-past { opacity: 0.45; cursor: default; }
+
+    /* ---------- Modal (手動新增預約) ---------- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(90, 64, 56, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-inner {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 460px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px -20px rgba(90,64,56,0.5);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--bg-alt);
+      color: var(--ink-soft);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-label { display: block; font-weight: 700; font-size: 13.5px; color: var(--ink-soft); margin: 14px 0 7px; }
+    .modal-label:first-of-type { margin-top: 0; }
+
+    .modal-slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+    .modal-slot-btn {
+      padding: 10px 4px;
+      border: 2px solid var(--line);
+      background: #FFFCFB;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .modal-slot-btn.selected {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      color: #fff;
+      border-color: var(--accent-deep);
+    }
+
+    .modal-option-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 4px;
+      border-bottom: 1.5px dashed var(--line);
+      font-size: 14px;
+    }
+    .modal-option-item:last-child { border-bottom: none; }
+    .modal-option-item label { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+    .modal-option-item .price { font-family: 'Baloo 2', sans-serif; font-weight: 700; color: var(--accent-deep); font-size: 13.5px; }
+
+    .modal-total-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: 16px; padding-top: 14px; border-top: 2px dashed var(--line);
+    }
+    .modal-total-value { font-family: 'Baloo 2', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent-deep); }
+    .discount-badge { display: none; color: var(--mint); font-weight: 700; font-size: 12.5px; margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -254,7 +334,7 @@
       <p class="empty-note" style="grid-column: 1/-1;">載入中...</p>
     </div>
     <div class="hint" style="margin-top: 14px; margin-bottom: 0;">
-      💡 <b>灰色（公休）</b>的日期點一下會直接開放當天全部時段；<b style="color:#3E7A66;">綠色</b>（尚有空位）或<b style="color:#B04A3F;">紅色</b>（已滿）的日期點下去會跳到下方，方便你調整個別時段或查看預約明細。
+      💡 點擊任何日期都會跳到下方「日期與時段排程管理」，由你自己手動決定要開放哪些時段；<b style="color:#3E7A66;">綠色</b>代表尚有空位、<b style="color:#B04A3F;">紅色</b>代表已無可預約時段。
     </div>
   </div>
 
@@ -266,11 +346,12 @@
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="toggleAllSlots(false)">一鍵全天公休</button>
         <button class="btn" onclick="toggleAllSlots(true)">一鍵開放全天</button>
+        <button class="btn" style="background: linear-gradient(135deg, var(--mint) 0%, #4FAE90 100%); box-shadow: 0 6px 14px -6px rgba(111,205,176,0.5);" onclick="openManualBookingModal()">+ 手動新增預約</button>
       </div>
     </div>
 
     <div class="hint">
-      💡 提示：時段預設為 <b>「已無可預約時間/未開放」</b>，點擊即可開放預約；已開放的時段再點一次可收回；已被顧客預約的時段為 <b>「已客滿」</b>。
+      💡 提示：時段預設為 <b>「不開放」</b>，點擊即可開放預約；已開放的時段再點一次可收回；已被顧客預約的時段為 <b>「已客滿」</b>；緊接在後方 <b style="color:#9C6A1E;">橘色「服務進行中」</b> 的時段是自動預留的緩衝時間（每筆預約占用 3 小時），不能單獨開放。
     </div>
 
     <div class="slot-grid" id="adminSlotsContainer">
@@ -310,6 +391,44 @@
     </table>
   </div>
 
+  <!-- 手動新增預約彈窗 -->
+  <div class="modal-overlay" id="manualBookingModal">
+    <div class="modal-inner">
+      <button class="modal-close" onclick="closeManualBookingModal()">✕</button>
+      <h3 class="eyebrow">➕ 手動新增預約</h3>
+
+      <label class="modal-label">姓名 *</label>
+      <input type="text" id="manualName" placeholder="顧客姓名">
+
+      <label class="modal-label">電話 *</label>
+      <input type="tel" id="manualPhone" placeholder="顧客電話" onchange="checkManualReturning()">
+
+      <label class="modal-label">LINE ID（選填）</label>
+      <input type="text" id="manualLine" placeholder="方便聯繫溝通">
+
+      <label class="modal-label">日期 *</label>
+      <input type="date" id="manualDate" onchange="loadManualSlots()">
+
+      <label class="modal-label">時段 *</label>
+      <div class="modal-slot-grid" id="manualSlotsContainer">
+        <p class="empty-note" style="grid-column: 1/-1;">請先選日期</p>
+      </div>
+
+      <label class="modal-label">美睫款式 *</label>
+      <div id="manualStyleOptions">載入中...</div>
+
+      <label class="modal-label">加購項目（複選）</label>
+      <div id="manualAddonOptions">載入中...</div>
+
+      <div class="modal-total-row">
+        <span>預計金額 <span class="discount-badge" id="manualDiscountBadge">🎉 舊客9折</span></span>
+        <span class="modal-total-value">NT$ <span id="manualTotalPrice">0</span></span>
+      </div>
+
+      <button class="btn add-row-btn" style="width: 100%; padding: 12px; margin-top: 16px;" onclick="saveManualBooking()">確認新增</button>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://tlnodsjkpvupuxlbkuoy.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsbm9kc2prcHZ1cHV4bGJrdW95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MTk2NzUsImV4cCI6MjEwMTk5NTY3NX0.czGHw2bokxTWga5wvxKlQdUAogkRZV6PkYmMPaYFPEE';
@@ -317,7 +436,19 @@
 
     const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
+    // 👉 每筆預約占用的服務時長：3 小時 = 6 個 30 分鐘時段（含本身）。
+    //    有人訂了 11:00，接下來 11:30～13:30 都會自動變成緩衝時段，下一個可預約時間是 14:00。
+    const SERVICE_DURATION_SLOTS = 6;
+
+    function getBlockedSlots(bookingTime) {
+      const idx = DEFAULT_SLOTS.indexOf(bookingTime);
+      if (idx === -1) return [bookingTime];
+      return DEFAULT_SLOTS.slice(idx, idx + SERVICE_DURATION_SLOTS);
+    }
+
     let calYear, calMonth;
+    let cachedStyles = [];
+    let cachedAddons = [];
 
     window.onload = () => {
       const todayDate = new Date();
@@ -354,7 +485,7 @@
       const endStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(daysInMonth)}`;
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr).neq('status', 'cancelled');
 
       const todayStr = new Date().toISOString().split('T')[0];
       const selectedDate = document.getElementById('adminDate').value;
@@ -368,33 +499,32 @@
         const dateStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(day)}`;
         const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
         const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
-        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        const blockedTimes = new Set();
+        dayBookings.forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
 
         const openTimes = DEFAULT_SLOTS.filter(t => {
           const sch = daySchedules.find(s => s.time_slot === t);
           return sch && sch.is_available === true;
         });
-        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+        const remainingTimes = openTimes.filter(t => !blockedTimes.has(t));
 
         let statusClass, statusLabel;
-        if (openTimes.length === 0) {
-          statusClass = 'cal-off';
-          statusLabel = '已無可預約時間';
-        } else if (remainingTimes.length === 0) {
-          statusClass = 'cal-full';
-          statusLabel = '已無可預約時間';
+        if (remainingTimes.length === 0) {
+          statusClass = 'cal-unavailable';
+          statusLabel = '已無可預約時段';
         } else {
           statusClass = 'cal-open';
           statusLabel = remainingTimes.join('、');
         }
 
-        let extraClass = '';
         const isPast = dateStr < todayStr;
+        let extraClass = '';
         if (dateStr === todayStr) extraClass += ' today';
         if (dateStr === selectedDate) extraClass += ' selected';
         if (isPast) extraClass += ' cal-past';
 
-        const clickHandler = isPast ? '' : `onclick="onCalendarDayClick('${dateStr}', '${statusClass}')"`;
+        const clickHandler = isPast ? '' : `onclick="jumpToDate('${dateStr}')"`;
 
         cells += `
           <div class="calendar-day ${statusClass}${extraClass}" ${clickHandler}>
@@ -407,32 +537,7 @@
       grid.innerHTML = cells;
     }
 
-    function onCalendarDayClick(dateStr, statusClass) {
-      if (statusClass === 'cal-off') {
-        quickOpenDay(dateStr);
-      } else {
-        jumpToDate(dateStr);
-      }
-    }
-
-    async function quickOpenDay(dateStr) {
-      const upsertData = DEFAULT_SLOTS.map(time => ({
-        date: dateStr,
-        time_slot: time,
-        is_available: true
-      }));
-
-      const { error } = await supabaseClient
-        .from('schedules')
-        .upsert(upsertData, { onConflict: 'date, time_slot' });
-
-      if (error) { alert('開放失敗：' + error.message); return; }
-
-      document.getElementById('adminDate').value = dateStr;
-      loadScheduleAndBookings();
-      loadMonthCalendar();
-    }
-
+    // 點擊月曆上的日期，一律跳到下方時段管理，由你自己手動開放要的時段
     function jumpToDate(dateStr) {
       document.getElementById('adminDate').value = dateStr;
       loadScheduleAndBookings();
@@ -448,21 +553,35 @@
       container.innerHTML = '載入中...';
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').eq('booking_date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').eq('booking_date', date).neq('status', 'cancelled');
+
+      const exactBookingMap = {};
+      const bufferSet = new Set();
+      (dbBookings || []).forEach(b => {
+        exactBookingMap[b.booking_time] = b;
+        getBlockedSlots(b.booking_time).forEach(t => { if (t !== b.booking_time) bufferSet.add(t); });
+      });
 
       container.innerHTML = DEFAULT_SLOTS.map(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
-        const booking = dbBookings?.find(b => b.booking_time === time);
-
         const isAvailable = schedule ? schedule.is_available === true : false;
-        const isBooked = !!booking;
+        const booking = exactBookingMap[time];
+        const isBuffer = bufferSet.has(time) && !booking;
 
-        if (isBooked) {
+        if (booking) {
           return `
             <div class="slot-card booked">
               <div class="time">${time}</div>
               <div class="status-label">🔴 已客滿</div>
               <div class="cust-label">👤 ${booking.customer_name} (${booking.customer_phone})</div>
+            </div>
+          `;
+        } else if (isBuffer) {
+          return `
+            <div class="slot-card buffer">
+              <div class="time">${time}</div>
+              <div class="status-label">🟠 服務進行中</div>
+              <div class="toggle-tip">前一筆預約的緩衝時段</div>
             </div>
           `;
         } else if (isAvailable) {
@@ -521,7 +640,7 @@
         return;
       }
 
-      const sourceLabels = { line: 'LINE', instagram: 'Instagram', facebook: 'Facebook', direct: '直接連結', referral: '其他連結' };
+      const sourceLabels = { line: 'LINE', instagram: 'Instagram', facebook: 'Facebook', direct: '直接連結', referral: '其他連結', admin: '手動新增' };
 
       tbody.innerHTML = bookings.map(b => `
         <tr>
@@ -539,15 +658,18 @@
 
     async function cancelBooking(id) {
       if (confirm('確定要取消此筆預約嗎？')) {
-        await supabaseClient.from('bookings').delete().eq('id', id);
+        // 軟刪除：只標記為 cancelled，保留完整預約歷史
+        await supabaseClient.from('bookings').update({ status: 'cancelled' }).eq('id', id);
         loadScheduleAndBookings();
+        loadMonthCalendar();
       }
     }
 
     async function loadStyles() {
       const { data } = await supabaseClient.from('eyelash_styles').select('*').order('created_at');
+      cachedStyles = data || [];
       const tbody = document.querySelector('#stylesTable tbody');
-      tbody.innerHTML = (data || []).map(s => `
+      tbody.innerHTML = cachedStyles.map(s => `
         <tr>
           <td><input type="text" value="${s.name}" id="style-name-${s.id}"></td>
           <td><input type="number" value="${s.price}" id="style-price-${s.id}"></td>
@@ -564,6 +686,7 @@
       const price = document.getElementById(`style-price-${id}`).value;
       await supabaseClient.from('eyelash_styles').update({ name, price }).eq('id', id);
       alert('款式已更新！');
+      loadStyles();
     }
 
     async function deleteStyle(id) {
@@ -610,8 +733,9 @@
 
     async function loadAddons() {
       const { data } = await supabaseClient.from('add_ons').select('*').order('created_at');
+      cachedAddons = data || [];
       const tbody = document.querySelector('#addonsTable tbody');
-      tbody.innerHTML = (data || []).map(a => `
+      tbody.innerHTML = cachedAddons.map(a => `
         <tr>
           <td><input type="text" value="${a.name}" id="addon-name-${a.id}"></td>
           <td><input type="number" value="${a.price}" id="addon-price-${a.id}"></td>
@@ -628,6 +752,7 @@
       const price = document.getElementById(`addon-price-${id}`).value;
       await supabaseClient.from('add_ons').update({ name, price }).eq('id', id);
       alert('加購項目已更新！');
+      loadAddons();
     }
 
     async function deleteAddon(id) {
@@ -666,6 +791,155 @@
       const { error } = await supabaseClient.from('add_ons').insert([{ name, price: Number(price) }]);
       if (error) { alert('新增失敗：' + error.message); return; }
       loadAddons();
+    }
+
+    // ---------- 手動新增預約 ----------
+    let manualSelectedStyle = null;
+    let manualSelectedAddons = [];
+    let manualSelectedTime = '';
+    let manualIsReturning = false;
+
+    function openManualBookingModal() {
+      document.getElementById('manualName').value = '';
+      document.getElementById('manualPhone').value = '';
+      document.getElementById('manualLine').value = '';
+      document.getElementById('manualDate').value = document.getElementById('adminDate').value || new Date().toISOString().split('T')[0];
+      manualSelectedStyle = null;
+      manualSelectedAddons = [];
+      manualSelectedTime = '';
+      manualIsReturning = false;
+      document.getElementById('manualDiscountBadge').style.display = 'none';
+
+      renderManualStyleOptions();
+      renderManualAddonOptions();
+      updateManualTotal();
+      loadManualSlots();
+
+      document.getElementById('manualBookingModal').style.display = 'flex';
+    }
+
+    function closeManualBookingModal() {
+      document.getElementById('manualBookingModal').style.display = 'none';
+    }
+
+    function renderManualStyleOptions() {
+      const c = document.getElementById('manualStyleOptions');
+      if (cachedStyles.length === 0) { c.innerHTML = '<p class="empty-note">尚無可選款式</p>'; return; }
+      c.innerHTML = cachedStyles.map(s => `
+        <div class="modal-option-item">
+          <label><input type="radio" name="manualStyleSelect" value="${s.id}" onchange="updateManualTotal()"> ${s.name}</label>
+          <span class="price">NT$ ${s.price}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderManualAddonOptions() {
+      const c = document.getElementById('manualAddonOptions');
+      if (cachedAddons.length === 0) { c.innerHTML = '<p class="empty-note">無加購項目</p>'; return; }
+      c.innerHTML = cachedAddons.map(a => `
+        <div class="modal-option-item">
+          <label><input type="checkbox" class="manual-addon-checkbox" value="${a.id}" onchange="updateManualTotal()"> ${a.name}</label>
+          <span class="price">+ NT$ ${a.price}</span>
+        </div>
+      `).join('');
+    }
+
+    // 電話一填完，檢查是不是老客戶（有沒有其他有效預約紀錄），有的話自動打 9 折
+    async function checkManualReturning() {
+      const phone = document.getElementById('manualPhone').value.trim();
+      if (!phone || phone.length < 8) {
+        manualIsReturning = false;
+        document.getElementById('manualDiscountBadge').style.display = 'none';
+        updateManualTotal();
+        return;
+      }
+      const { data } = await supabaseClient.from('bookings').select('id').eq('customer_phone', phone).neq('status', 'cancelled');
+      manualIsReturning = !!(data && data.length > 0);
+      document.getElementById('manualDiscountBadge').style.display = manualIsReturning ? 'inline' : 'none';
+      updateManualTotal();
+    }
+
+    function updateManualTotal() {
+      let total = 0;
+      const styleId = document.querySelector('input[name="manualStyleSelect"]:checked')?.value;
+      manualSelectedStyle = cachedStyles.find(s => s.id === styleId) || null;
+      if (manualSelectedStyle) total += Number(manualSelectedStyle.price);
+
+      manualSelectedAddons = [];
+      document.querySelectorAll('.manual-addon-checkbox:checked').forEach(cb => {
+        const addon = cachedAddons.find(a => a.id === cb.value);
+        if (addon) { manualSelectedAddons.push(addon); total += Number(addon.price); }
+      });
+
+      if (manualIsReturning) total = Math.round(total * 0.9);
+      document.getElementById('manualTotalPrice').innerText = total;
+    }
+
+    async function loadManualSlots() {
+      const date = document.getElementById('manualDate').value;
+      const container = document.getElementById('manualSlotsContainer');
+      if (!date) { container.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">請先選日期</p>'; return; }
+      container.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">載入中...</p>';
+
+      const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('booking_time').eq('booking_date', date).neq('status', 'cancelled');
+
+      const blockedTimes = new Set();
+      (dbBookings || []).forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
+
+      const openSlots = DEFAULT_SLOTS.filter(time => {
+        const schedule = dbSchedules?.find(s => s.time_slot === time);
+        const isOff = !(schedule && schedule.is_available === true);
+        return !isOff && !blockedTimes.has(time);
+      });
+
+      if (openSlots.length === 0) {
+        container.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">這天沒有可預約的時段</p>';
+        return;
+      }
+
+      container.innerHTML = openSlots.map(time =>
+        `<div class="modal-slot-btn" onclick="selectManualSlot(this, '${time}')">${time}</div>`
+      ).join('');
+    }
+
+    function selectManualSlot(btn, time) {
+      document.querySelectorAll('#manualSlotsContainer .modal-slot-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      manualSelectedTime = time;
+    }
+
+    async function saveManualBooking() {
+      const name = document.getElementById('manualName').value.trim();
+      const phone = document.getElementById('manualPhone').value.trim();
+      const line = document.getElementById('manualLine').value.trim();
+      const date = document.getElementById('manualDate').value;
+
+      if (!name || !phone) { alert('請填寫姓名與電話'); return; }
+      if (!date || !manualSelectedTime) { alert('請選擇日期與時段'); return; }
+      if (!manualSelectedStyle) { alert('請選擇美睫款式'); return; }
+
+      const total = document.getElementById('manualTotalPrice').innerText;
+
+      const { error } = await supabaseClient.from('bookings').insert([{
+        customer_name: name,
+        customer_phone: phone,
+        line_id: line,
+        booking_date: date,
+        booking_time: manualSelectedTime,
+        style_id: manualSelectedStyle.id,
+        style_name: manualSelectedStyle.name,
+        add_ons: manualSelectedAddons,
+        total_price: Number(total),
+        source: 'admin'
+      }]);
+
+      if (error) { alert('新增失敗：' + error.message); return; }
+
+      alert('✅ 已手動新增預約！');
+      closeManualBookingModal();
+      loadScheduleAndBookings();
+      loadMonthCalendar();
     }
   </script>
 </body>
