@@ -173,10 +173,8 @@
     .calendar-day.today { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(224,164,88,0.25); }
     .calendar-day.selected { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); border-color: var(--accent-deep); }
     .calendar-day.selected .day-num, .calendar-day.selected .day-status { color: #fff; }
-    .calendar-day.cal-off { background: var(--bg-alt); cursor: default; }
-    .calendar-day.cal-off .day-status { color: var(--ink-soft); }
-    .calendar-day.cal-full { background: var(--coral-tint); border-color: var(--coral); cursor: default; }
-    .calendar-day.cal-full .day-status { color: #B04A3F; }
+    .calendar-day.cal-unavailable { background: var(--coral-tint); border-color: var(--coral); cursor: default; }
+    .calendar-day.cal-unavailable .day-status { color: #B04A3F; }
     .calendar-day.cal-open { background: var(--mint-tint); border-color: var(--mint); }
     .calendar-day.cal-open .day-status { color: #3E7A66; }
     .calendar-day.cal-past { opacity: 0.4; cursor: default; }
@@ -430,7 +428,7 @@
   <!-- 4. 總計與送出 -->
   <div class="card" id="formCard4">
     <div class="total-row">
-      <span class="total-label">預計金額</span>
+      <span class="total-label">預計金額 <span id="discountBadge" style="display:none; color: var(--mint); font-weight:700; margin-left:6px;">🎉 舊客9折</span></span>
       <span class="total-value"><span class="currency">NT$</span><span id="totalPrice">0</span></span>
     </div>
     <button class="btn-submit" onclick="submitBooking()">確認並送出預約 🌸</button>
@@ -498,7 +496,7 @@
       <div id="editAddonOptions">載入中...</div>
 
       <div class="total-row" style="margin-top:18px;">
-        <span class="total-label">預計金額</span>
+        <span class="total-label">預計金額 <span id="editDiscountBadge" style="display:none; color: var(--mint); font-weight:700; margin-left:6px;">🎉 舊客9折</span></span>
         <span class="total-value"><span class="currency">NT$</span><span id="editTotalPrice">0</span></span>
       </div>
 
@@ -523,6 +521,19 @@
 
     // 預設常見時段（月曆總覽與時段清單共用）
     const DEFAULT_SLOTS = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
+
+    // 👉 每筆預約占用的服務時長：3 小時 = 6 個 30 分鐘時段（含本身）。
+    //    有人訂了 11:00，接下來 11:30～13:30 都會自動變成緩衝時段，下一個可預約時間是 14:00。
+    const SERVICE_DURATION_SLOTS = 6;
+
+    function getBlockedSlots(bookingTime) {
+      const idx = DEFAULT_SLOTS.indexOf(bookingTime);
+      if (idx === -1) return [bookingTime];
+      return DEFAULT_SLOTS.slice(idx, idx + SERVICE_DURATION_SLOTS);
+    }
+
+    // 曾經預約過的老客戶自動打 9 折
+    let isReturningCustomer = false;
 
     // 👉 預約時間前幾小時內，不讓客人自己修改／取消（要打電話聯繫）
     const MODIFY_CUTOFF_HOURS = 24;
@@ -629,7 +640,7 @@
       const endStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(daysInMonth)}`;
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr).neq('status', 'cancelled');
 
       const todayStr = new Date().toISOString().split('T')[0];
       const selectedDate = document.getElementById('bookingDate').value;
@@ -643,21 +654,20 @@
         const dateStr = `${calYear}-${pad2(calMonth + 1)}-${pad2(day)}`;
         const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
         const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
-        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        const blockedTimes = new Set();
+        dayBookings.forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
 
         const openTimes = DEFAULT_SLOTS.filter(t => {
           const sch = daySchedules.find(s => s.time_slot === t);
           return sch && sch.is_available === true;
         });
-        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+        const remainingTimes = openTimes.filter(t => !blockedTimes.has(t));
 
         let statusClass, statusLabel;
-        if (openTimes.length === 0) {
-          statusClass = 'cal-off';
-          statusLabel = '已無可預約時間';
-        } else if (remainingTimes.length === 0) {
-          statusClass = 'cal-full';
-          statusLabel = '已無可預約時間';
+        if (remainingTimes.length === 0) {
+          statusClass = 'cal-unavailable';
+          statusLabel = '已無可預約時段';
         } else {
           statusClass = 'cal-open';
           statusLabel = '可預約';
@@ -712,6 +722,8 @@
 
       if (!phone || phone.length < 8) {
         note.style.display = 'none';
+        isReturningCustomer = false;
+        updateTotal();
         return;
       }
 
@@ -723,8 +735,13 @@
 
       if (error || !data || data.length === 0) {
         note.style.display = 'none';
+        isReturningCustomer = false;
+        updateTotal();
         return;
       }
+
+      isReturningCustomer = true;
+      updateTotal();
 
       const nameInput = document.getElementById('custName');
       const lineInput = document.getElementById('custLine');
@@ -749,6 +766,7 @@
         phone = phone.trim();
         if (!phone) return;
         phoneInput.value = phone;
+        checkReturningCustomer();
       }
 
       showBookingHistory();
@@ -764,7 +782,7 @@
 
       const { data, error } = await supabaseClient
         .from('bookings')
-        .select('id, booking_date, booking_time, style_id, style_name, add_ons')
+        .select('id, booking_date, booking_time, style_id, style_name, add_ons, status')
         .eq('customer_phone', phone)
         .order('booking_date', { ascending: false });
 
@@ -778,17 +796,20 @@
 
       listEl.innerHTML = data.map(b => {
         const addonNames = (b.add_ons || []).map(a => a.name).join('、') || '無';
-        const editable = canModify(b.booking_date, b.booking_time);
+        const isCancelled = b.status === 'cancelled';
+        const editable = !isCancelled && canModify(b.booking_date, b.booking_time);
         return `
           <div class="history-item">
-            <div class="h-date">${b.booking_date} ${b.booking_time}</div>
+            <div class="h-date"${isCancelled ? ' style="text-decoration: line-through; color: var(--ink-soft);"' : ''}>${b.booking_date} ${b.booking_time}</div>
             <div class="h-detail">款式：${b.style_name}　加購：${addonNames}</div>
-            ${editable
-              ? `<div class="h-actions">
-                   <button class="btn-mini" onclick="openEditModal('${b.id}')">✏️ 修改</button>
-                   <button class="btn-mini btn-mini-danger" onclick="cancelBookingByCustomer('${b.id}')">🗑 取消</button>
-                 </div>`
-              : `<div class="h-locked">⏰ 已太接近預約時間，如需異動請直接聯繫我們</div>`}
+            ${isCancelled
+              ? `<div class="h-locked">🚫 已取消</div>`
+              : editable
+                ? `<div class="h-actions">
+                     <button class="btn-mini" onclick="openEditModal('${b.id}')">✏️ 修改</button>
+                     <button class="btn-mini btn-mini-danger" onclick="cancelBookingByCustomer('${b.id}')">🗑 取消</button>
+                   </div>`
+                : `<div class="h-locked">⏰ 已太接近預約時間，如需異動請直接聯繫我們</div>`}
           </div>
         `;
       }).join('');
@@ -806,7 +827,8 @@
       }
       if (!confirm('確定要取消這筆預約嗎？')) return;
 
-      const { error } = await supabaseClient.from('bookings').delete().eq('id', id);
+      // 軟刪除：只標記為 cancelled，保留完整預約歷史，不直接刪掉這筆資料
+      const { error } = await supabaseClient.from('bookings').update({ status: 'cancelled' }).eq('id', id);
       if (error) { alert('取消失敗：' + error.message); return; }
 
       alert('已取消預約');
@@ -891,6 +913,9 @@
         if (addon) { editSelectedAddons.push(addon); total += Number(addon.price); }
       });
 
+      // 能打開修改視窗就代表這個人本來就有預約紀錄，一定是老客戶，直接套用9折
+      total = Math.round(total * 0.9);
+      document.getElementById('editDiscountBadge').style.display = 'inline';
       document.getElementById('editTotalPrice').innerText = total;
     }
 
@@ -914,7 +939,7 @@
       const endStr = `${editCalYear}-${pad2(editCalMonth + 1)}-${pad2(daysInMonth)}`;
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').gte('date', startStr).lte('date', endStr);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr).neq('id', editingBookingId);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('*').gte('booking_date', startStr).lte('booking_date', endStr).neq('id', editingBookingId).neq('status', 'cancelled');
 
       const todayStr = new Date().toISOString().split('T')[0];
       const originalDateStr = editingBookingId ? (historyBookingsCache[editingBookingId]?.booking_date || '') : '';
@@ -926,24 +951,23 @@
         const dateStr = `${editCalYear}-${pad2(editCalMonth + 1)}-${pad2(day)}`;
         const daySchedules = (dbSchedules || []).filter(s => s.date === dateStr);
         const dayBookings = (dbBookings || []).filter(b => b.booking_date === dateStr);
-        const bookedTimes = dayBookings.map(b => b.booking_time);
+
+        const blockedTimes = new Set();
+        dayBookings.forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
 
         const openTimes = DEFAULT_SLOTS.filter(t => {
           const sch = daySchedules.find(s => s.time_slot === t);
           return sch && sch.is_available === true;
         });
-        const remainingTimes = openTimes.filter(t => !bookedTimes.includes(t));
+        const remainingTimes = openTimes.filter(t => !blockedTimes.has(t));
 
-        // 原本這筆預約的日期，即使顯示公休/已滿，仍然可以點回去（因為那個名額本來就是他自己的）
+        // 原本這筆預約的日期，即使顯示已無可預約時段，仍然可以點回去（因為那個名額本來就是他自己的）
         const isOriginalDate = dateStr === originalDateStr;
 
         let statusClass, statusLabel;
-        if ((openTimes.length === 0) && !isOriginalDate) {
-          statusClass = 'cal-off';
-          statusLabel = '已無可預約時間';
-        } else if ((remainingTimes.length === 0) && !isOriginalDate) {
-          statusClass = 'cal-full';
-          statusLabel = '已無可預約時間';
+        if ((remainingTimes.length === 0) && !isOriginalDate) {
+          statusClass = 'cal-unavailable';
+          statusLabel = '已無可預約時段';
         } else {
           statusClass = 'cal-open';
           statusLabel = '可預約';
@@ -986,16 +1010,17 @@
       container.innerHTML = '載入中...';
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('id, booking_time').eq('booking_date', date).neq('id', editingBookingId);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('id, booking_time').eq('booking_date', date).neq('id', editingBookingId).neq('status', 'cancelled');
 
-      const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
+      const blockedTimes = new Set();
+      (dbBookings || []).forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
 
       const openSlots = DEFAULT_SLOTS.filter(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
         const isOff = !(schedule && schedule.is_available === true);
-        const isBooked = bookedSlots.includes(time);
+        const isBlocked = blockedTimes.has(time);
         const isOriginalSlot = time === editSelectedTime;
-        return (!isOff && !isBooked) || isOriginalSlot;
+        return (!isOff && !isBlocked) || isOriginalSlot;
       });
 
       if (openSlots.length === 0) {
@@ -1082,15 +1107,15 @@
       const defaultSlots = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
       const { data: dbSchedules } = await supabaseClient.from('schedules').select('*').eq('date', date);
-      const { data: dbBookings } = await supabaseClient.from('bookings').select('booking_time').eq('booking_date', date);
+      const { data: dbBookings } = await supabaseClient.from('bookings').select('booking_time').eq('booking_date', date).neq('status', 'cancelled');
 
-      const bookedSlots = dbBookings ? dbBookings.map(b => b.booking_time) : [];
+      const blockedTimes = new Set();
+      (dbBookings || []).forEach(b => getBlockedSlots(b.booking_time).forEach(t => blockedTimes.add(t)));
 
       const openSlots = defaultSlots.filter(time => {
         const schedule = dbSchedules?.find(s => s.time_slot === time);
         const isOff = !(schedule && schedule.is_available === true);
-        const isBooked = bookedSlots.includes(time);
-        return !isOff && !isBooked;
+        return !isOff && !blockedTimes.has(time);
       });
 
       if (openSlots.length === 0) {
@@ -1127,6 +1152,8 @@
         }
       });
 
+      if (isReturningCustomer) total = Math.round(total * 0.9);
+      document.getElementById('discountBadge').style.display = isReturningCustomer ? 'inline' : 'none';
       document.getElementById('totalPrice').innerText = total;
     }
 
@@ -1171,7 +1198,7 @@
           `日期：${date} ${selectedTimeSlot}\n` +
           `款式：${selectedStyle.name}\n` +
           `加購：${addonText}\n` +
-          `金額：NT$ ${total}`;
+          `金額：NT$ ${total}${isReturningCustomer ? '（已套用舊客9折）' : ''}`;
 
         document.getElementById('confirmSummary').textContent = lastBookingSummary;
         document.getElementById('formCard4').style.display = 'none';
